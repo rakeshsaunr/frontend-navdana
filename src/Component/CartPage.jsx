@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 
 export default function CartPage() {
-  const { cart, addToCart, removeFromCart } = useCart();
+  const { cart, addToCart, removeFromCart, clearCart } = useCart();
   const [showCheckout, setShowCheckout] = useState(false);
   const [shippingInfo, setShippingInfo] = useState({
     fullName: "",
@@ -17,10 +17,10 @@ export default function CartPage() {
   });
   const [loading, setLoading] = useState(false);
 
-  // User authentication states
-  const [user, setUser] = useState(
-    JSON.parse(localStorage.getItem("user")) || null
-  );
+  // --- User authentication states ---
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")) || null);
+  const [token, setToken] = useState(localStorage.getItem("token") || "");
+
   const [showNamePopup, setShowNamePopup] = useState(false);
   const [showEmailPopup, setShowEmailPopup] = useState(false);
   const [showOtpPopup, setShowOtpPopup] = useState(false);
@@ -29,22 +29,30 @@ export default function CartPage() {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
 
+  // --- Cart handlers ---
   const handleIncrement = (item) => {
-    if (item.quantity < 1) addToCart(item);
+    if (item.quantity < (item.stock || 1)) {
+      addToCart(item, 1); // ✅ add one more of same variant
+    } else {
+      alert("No more stock available for this variant!");
+    }
   };
-  const handleDecrement = (item) => removeFromCart(item._id);
-  const handleRemove = (item) => removeFromCart(item._id);
 
-  const totalPrice = cart.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
+  const handleDecrement = (item) => {
+    removeFromCart(item._id, item.size, item.color, item.sku);
+  };
+
+  const handleRemove = (item) => {
+    removeFromCart(item._id, item.size, item.color, item.sku, true);
+  };
+
+  const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   const handleChange = (e) => {
     setShippingInfo({ ...shippingInfo, [e.target.name]: e.target.value });
   };
 
-  // Step 1: If user not logged in → ask for name first
+  // --- Checkout flow ---
   const startCheckout = () => {
     if (!user) {
       setShowNamePopup(true);
@@ -53,7 +61,6 @@ export default function CartPage() {
     }
   };
 
-  // Step 2: After name → ask for email
   const nextToEmail = () => {
     if (!name.trim()) {
       alert("Please enter your name");
@@ -63,7 +70,6 @@ export default function CartPage() {
     setShowEmailPopup(true);
   };
 
-  // Step 3: Send OTP
   const sendOtp = async () => {
     try {
       if (!email.trim()) {
@@ -81,7 +87,6 @@ export default function CartPage() {
     }
   };
 
-  // Step 4: Verify OTP → send name, email, otp
   const verifyOtp = async () => {
     try {
       if (!otp.trim()) {
@@ -89,15 +94,25 @@ export default function CartPage() {
         return;
       }
       setLoading(true);
-      const res = await axios.post("http://localhost:5000/api/v1/user/register", {
-        name,
-        email,
-        otp,
-      });
-      console.log("User Data Sent:", { name, email, otp });
+
+      const res = await axios.post(
+        "http://localhost:5000/api/v1/user/verify",
+        { name, email, otp, token: token || null },
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          withCredentials: true,
+        }
+      );
+
       setLoading(false);
-      setUser(res.data.user);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
+
+      const { user: loggedInUser, token: authToken } = res.data;
+      setUser(loggedInUser);
+      setToken(authToken);
+
+      localStorage.setItem("user", JSON.stringify(loggedInUser));
+      localStorage.setItem("token", authToken);
+
       setShowOtpPopup(false);
       setShowCheckout(true);
     } catch (err) {
@@ -106,26 +121,26 @@ export default function CartPage() {
     }
   };
 
-  // Step 5: Place order
   const handleCheckout = async () => {
-    const { fullName, address, city, postalCode, country, paymentMethod } =
-      shippingInfo;
+    const { fullName, address, city, postalCode, country, paymentMethod } = shippingInfo;
     if (!fullName || !address || !city || !postalCode || !country || !paymentMethod) {
       alert("Please fill all required shipping details");
       return;
     }
 
     const orderData = {
-      user: user?._id, // attach logged-in user
+      user: user?._id,
       items: cart.map((item) => ({
         product: item._id,
         name: item.name,
         quantity: item.quantity,
         price: item.price,
         size: item.size || "",
+        color: item.color || "",
+        sku: item.sku || "",
       })),
       shippingAddress: shippingInfo,
-      paymentMethod: shippingInfo.paymentMethod,
+      paymentMethod,
       prices: {
         itemsPrice: totalPrice,
         taxPrice: totalPrice * 0.05,
@@ -136,9 +151,13 @@ export default function CartPage() {
 
     try {
       setLoading(true);
-      await axios.post("http://localhost:5000/api/v1/order", orderData);
+      await axios.post("http://localhost:5000/api/v1/order", orderData, {
+        headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true,
+      });
       setLoading(false);
       alert("Order placed successfully!");
+      clearCart(); // ✅ empty cart after success
       setShowCheckout(false);
     } catch (err) {
       setLoading(false);
@@ -146,6 +165,7 @@ export default function CartPage() {
     }
   };
 
+  // --- Empty cart UI ---
   if (cart.length === 0)
     return (
       <div className="p-10 text-center">
@@ -166,9 +186,9 @@ export default function CartPage() {
 
       {/* Cart items */}
       <div className="grid gap-6">
-        {cart.map((item) => (
+        {cart.map((item, idx) => (
           <div
-            key={item._id}
+            key={`${item._id}-${item.size}-${item.color}-${item.sku}-${idx}`}
             className="flex flex-col md:flex-row items-center md:justify-between p-6 bg-white rounded-xl shadow-lg hover:shadow-2xl transition relative"
           >
             <img
@@ -179,7 +199,11 @@ export default function CartPage() {
             <div className="flex-1 md:ml-6 flex flex-col gap-2 mt-4 md:mt-0">
               <h3 className="text-2xl font-semibold">{item.name}</h3>
               <p className="text-gray-700 text-lg">₹{item.price}</p>
-              {item.size && <p className="text-gray-600">Size: {item.size}</p>}
+              <div className="text-gray-600">
+                {item.size && <p>Size: {item.size}</p>}
+                {item.color && <p>Color: {item.color}</p>}
+                {item.sku && <p className="text-xs text-gray-500">SKU: {item.sku}</p>}
+              </div>
 
               <div className="flex items-center gap-4 mt-2">
                 <button
@@ -216,9 +240,7 @@ export default function CartPage() {
       {/* Cart total */}
       <div className="mt-10 p-6 bg-gray-100 rounded-xl flex flex-col md:flex-row justify-between items-center shadow-inner">
         <h3 className="text-2xl font-bold">Total:</h3>
-        <p className="text-3xl font-extrabold text-black mt-3 md:mt-0">
-          ₹{totalPrice}
-        </p>
+        <p className="text-3xl font-extrabold text-black mt-3 md:mt-0">₹{totalPrice}</p>
         <button
           onClick={startCheckout}
           className="mt-4 md:mt-0 px-8 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition font-semibold"
@@ -227,7 +249,8 @@ export default function CartPage() {
         </button>
       </div>
 
-      {/* Name Popup */}
+      {/* --- Popups --- */}
+      {/* Name popup */}
       {showNamePopup && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl max-w-md w-full p-6">
@@ -257,7 +280,7 @@ export default function CartPage() {
         </div>
       )}
 
-      {/* Email Popup */}
+      {/* Email popup */}
       {showEmailPopup && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl max-w-md w-full p-6">
@@ -287,7 +310,7 @@ export default function CartPage() {
         </div>
       )}
 
-      {/* OTP Popup */}
+      {/* OTP popup */}
       {showOtpPopup && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl max-w-md w-full p-6">
@@ -317,7 +340,7 @@ export default function CartPage() {
         </div>
       )}
 
-      {/* Checkout Modal */}
+      {/* Checkout popup */}
       {showCheckout && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl max-w-lg w-full p-8 relative">
