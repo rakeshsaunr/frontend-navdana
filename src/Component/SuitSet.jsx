@@ -11,7 +11,7 @@ export default function SuitSet() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/v1/product");
+        const res = await axios.get("http://194.164.149.179:5000/api/v1/product");
         if (res.data.success) {
           setProducts(res.data.data); // products are inside "data"
           console.log("Data is:", res.data.data);
