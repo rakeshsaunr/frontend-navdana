@@ -1,21 +1,22 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
-import { useCart } from "../context/CartContext"; // import the context
+import { useCart } from "../context/CartContext";
 
 export default function ProductDetails() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
-  const [selectedSize, setSelectedSize] = useState(""); // New state for size
+  const [selectedColor, setSelectedColor] = useState("");
+  const [selectedSize, setSelectedSize] = useState("");
+  const [selectedVariant, setSelectedVariant] = useState(null);
 
-  const { cart, addToCart } = useCart(); // get cart & addToCart function
+  const { cart, addToCart } = useCart();
 
   useEffect(() => {
     async function fetchProduct() {
       try {
         const res = await axios.get(`http://localhost:5000/api/v1/product/${id}`);
-        console.log(res);
         setProduct(res.data.data);
 
         if (res.data.data.images?.length > 0) {
@@ -28,20 +29,39 @@ export default function ProductDetails() {
     fetchProduct();
   }, [id]);
 
+  useEffect(() => {
+    if (selectedColor && selectedSize) {
+      const variant = product?.variant?.find(
+        (v) => v.color === selectedColor && v.size === selectedSize
+      );
+      setSelectedVariant(variant || null);
+    } else {
+      setSelectedVariant(null);
+    }
+  }, [selectedColor, selectedSize, product]);
+
   if (!product) return <p className="p-6">Loading...</p>;
 
   const handleAddToCart = () => {
-    if (!selectedSize) {
-      alert("Please select a size before adding to cart!");
+    if (!selectedVariant) {
+      alert("Please select a size & color before adding to cart!");
+      return;
+    }
+
+    if (selectedVariant.stock === 0) {
+      alert("This variant is out of stock!");
       return;
     }
 
     const alreadyInCart = cart.find(
-      (item) => item._id === product._id && item.size === selectedSize
+      (item) =>
+        item._id === product._id &&
+        item.size === selectedVariant.size &&
+        item.color === selectedVariant.color
     );
 
     if (alreadyInCart) {
-      alert("Only one item per size can be added due to limited stock!");
+      alert("This variant is already in your cart!");
       return;
     }
 
@@ -51,19 +71,23 @@ export default function ProductDetails() {
       price: product.price,
       image: selectedImage,
       quantity: 1,
-      size: selectedSize, // save size in cart
+      size: selectedVariant.size,
+      color: selectedVariant.color,
+      sku: selectedVariant.sku,
     });
 
     alert("Product added to cart!");
   };
 
-  const sizes = ["XS", "S", "M", "L", "XL"]; // Size options
-
   // ✅ Convert description into bullet points
   const descriptionPoints = product.description
-    ?.split(/•|\n/) // split by "•" or newline
+    ?.split(/•|\n/)
     .map((point) => point.trim())
     .filter((point) => point.length > 0);
+
+  // Unique colors & sizes
+  const colors = [...new Set(product.variant?.map((v) => v.color))];
+  const sizes = [...new Set(product.variant?.map((v) => v.size))];
 
   return (
     <div className="p-8 max-w-6xl mx-auto bg-white rounded-xl shadow-lg">
@@ -105,8 +129,8 @@ export default function ProductDetails() {
         <div className="flex flex-col gap-6">
           <h1 className="text-4xl font-extrabold text-gray-900">{product.name}</h1>
           <p className="text-2xl font-semibold text-gray-700">₹{product.price}</p>
-          
-          {/* Description as bullet points */}
+
+          {/* Description */}
           {descriptionPoints?.length > 0 && (
             <div>
               <h2 className="font-semibold text-lg mb-2">Description:</h2>
@@ -118,23 +142,58 @@ export default function ProductDetails() {
             </div>
           )}
 
-          {/* Size Selection */}
-          <div className="flex items-center gap-4">
-            <span className="font-medium">Size:</span>
-            <select
-              value={selectedSize}
-              onChange={(e) => setSelectedSize(e.target.value)}
-              className="border border-gray-300 rounded px-3 py-2"
-            >
-              <option value="">Select Size</option>
-              {sizes.map((size) => (
-                <option key={size} value={size}>
-                  {size}
-                </option>
+          {/* Color Selection */}
+          <div>
+            <h3 className="font-medium mb-2">Color:</h3>
+            <div className="flex gap-3">
+              {colors.map((color, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setSelectedColor(color)}
+                  className={`px-4 py-2 border rounded-lg transition-all
+                    ${selectedColor === color ? "border-black bg-gray-100" : "border-gray-300"}
+                  `}
+                >
+                  {color}
+                </button>
               ))}
-            </select>
+            </div>
           </div>
 
+          {/* Size Selection */}
+          <div>
+            <h3 className="font-medium mb-2">Size:</h3>
+            <div className="flex gap-3">
+              {sizes.map((size, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setSelectedSize(size)}
+                  className={`px-4 py-2 border rounded-lg transition-all
+                    ${selectedSize === size ? "border-black bg-gray-100" : "border-gray-300"}
+                  `}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Stock Info */}
+          {selectedVariant && (
+            <div>
+              {selectedVariant.stock === 0 ? (
+                <p className="text-gray-500">Out of stock</p>
+              ) : selectedVariant.stock <= 5 ? (
+                <p className="text-red-500 font-medium">
+                  Hurry! Only {selectedVariant.stock} left
+                </p>
+              ) : (
+                <p className="text-green-600">In stock</p>
+              )}
+            </div>
+          )}
+
+          {/* Action Buttons */}
           <button
             onClick={handleAddToCart}
             className="bg-black text-white px-8 py-4 rounded-lg text-lg font-semibold shadow-md hover:bg-gray-800 transition-all"

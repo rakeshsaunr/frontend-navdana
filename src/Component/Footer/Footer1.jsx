@@ -25,7 +25,7 @@ export default function Footer1() {
             </div>
             <h3 className="text-lg font-semibold">Customer Service</h3>
             <p className="text-sm text-gray-300">
-              Mon–Fri: 9am–7pm • Live chat & phone
+              Mon–Fri: 10am–6pm • Live chat & phone
              
             </p>
           </div>
@@ -50,7 +50,7 @@ export default function Footer1() {
             <p className="text-sm text-gray-300">
               Email:{" "}
               <a href="mailto:support@example.com" className="underline">
-                support@example.com
+                support@navdana.com
               </a>
             </p>
             <p className="text-sm text-gray-300">

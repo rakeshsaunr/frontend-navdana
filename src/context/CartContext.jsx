@@ -17,41 +17,77 @@ export const CartProvider = ({ children }) => {
     localStorage.setItem("cart", JSON.stringify(cart));
   }, [cart]);
 
-  // Add to cart (increment quantity if exists)
+  // ✅ Add item or increment variant quantity
   const addToCart = (product, quantity = 1) => {
     setCart((prevCart) => {
-      const existing = prevCart.find((item) => item._id === product._id);
+      const existing = prevCart.find(
+        (item) =>
+          item._id === product._id &&
+          item.size === product.size &&
+          item.color === product.color &&
+          item.sku === product.sku
+      );
+
       if (existing) {
         return prevCart.map((item) =>
-          item._id === product._id
-            ? { ...item, quantity: item.quantity + quantity } // remove 1-item limit
+          item._id === product._id &&
+          item.size === product.size &&
+          item.color === product.color &&
+          item.sku === product.sku
+            ? { ...item, quantity: item.quantity + quantity }
             : item
         );
       }
+
       return [...prevCart, { ...product, quantity }];
     });
   };
 
-  // Remove or decrement quantity
-  const removeFromCart = (_id, quantity = null) => {
+  // ✅ Remove or decrement
+  const removeFromCart = (_id, size, color, sku, removeAll = false) => {
     setCart((prevCart) => {
-      const existing = prevCart.find((item) => item._id === _id);
+      const existing = prevCart.find(
+        (item) =>
+          item._id === _id &&
+          item.size === size &&
+          item.color === color &&
+          item.sku === sku
+      );
       if (!existing) return prevCart;
 
-      if (quantity === null || existing.quantity <= quantity) {
-        // Remove entire item
-        return prevCart.filter((item) => item._id !== _id);
-      } else {
-        // Decrease quantity
-        return prevCart.map((item) =>
-          item._id === _id ? { ...item, quantity: item.quantity - quantity } : item
+      if (removeAll || existing.quantity <= 1) {
+        return prevCart.filter(
+          (item) =>
+            !(
+              item._id === _id &&
+              item.size === size &&
+              item.color === color &&
+              item.sku === sku
+            )
         );
       }
+
+      return prevCart.map((item) =>
+        item._id === _id &&
+        item.size === size &&
+        item.color === color &&
+        item.sku === sku
+          ? { ...item, quantity: item.quantity - 1 }
+          : item
+      );
     });
   };
 
+  // ✅ Clear cart (used after successful order)
+  const clearCart = () => {
+    setCart([]);
+    localStorage.removeItem("cart");
+  };
+
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart }}>
+    <CartContext.Provider
+      value={{ cart, addToCart, removeFromCart, clearCart }}
+    >
       {children}
     </CartContext.Provider>
   );

@@ -1,25 +1,24 @@
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Menu, Search, User, ShoppingCart } from "lucide-react";
-import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "/Images/LOGO.PNG";
 import { useCart } from "../context/CartContext";
 
-export default function Header() {
+const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [categories, setCategories] = useState([]);
   const { cart } = useCart();
   const navigate = useNavigate();
 
-  // Fetch categories from API using Axios
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/v1/category");
-        console.log(response.data.categories)
-        // assuming your API returns an array like: [{ name: "Kurtas" }, { name: "Bestsellers" }, ...]
+        const response = await axios.get(
+          "https://myapp.loca.lt/api/v1/category"
+        );
+        // API se categories ka naam nikal ke set kar rahe hain
         const categoryNames = response.data.categories.map((cat) => cat.name);
-        console.log("Category names:",categoryNames)
         setCategories(categoryNames);
       } catch (error) {
         console.error("Error fetching categories:", error);
@@ -33,6 +32,11 @@ export default function Header() {
     navigate("/coming-soon");
   };
 
+  const handleLogoClick = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    navigate("/");
+  };
+
   return (
     <header className="w-full shadow-md bg-white sticky top-0 z-50">
       {/* Top strip */}
@@ -42,10 +46,15 @@ export default function Header() {
         </h1>
       </div>
 
-      <div className="max-w-7xl mx-auto px-3 py-1 flex justify-between items-center text-black">
+      <div className="max-w-7xl mx-auto px-1 py-2 flex justify-between items-center text-black">
         {/* Logo */}
-        <div className="flex items-center space-x-2">
-          <img src={logo} alt="Logo" className="h-30 w-30" />
+        <div className="flex items-center space-x-2 justify-start">
+          <img
+            src={logo}
+            alt="Logo"
+            className="h-35 w-35 cursor-pointer"
+            onClick={handleLogoClick}
+          />
         </div>
 
         {/* Desktop Nav Links */}
@@ -66,12 +75,13 @@ export default function Header() {
           <button onClick={handleComingSoon}>
             <Search className="w-6 h-6 cursor-pointer" color="#000" strokeWidth={2.5} />
           </button>
-
           <button onClick={handleComingSoon}>
             <User className="w-6 h-6 cursor-pointer" color="#000" strokeWidth={2.5} />
           </button>
-
-          <div className="relative cursor-pointer" onClick={() => navigate("/cart")}>
+          <div
+            className="relative cursor-pointer"
+            onClick={() => navigate("/cart")}
+          >
             <ShoppingCart className="w-6 h-6" color="#000" strokeWidth={2.5} />
             {cart.length > 0 && (
               <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
@@ -79,7 +89,6 @@ export default function Header() {
               </span>
             )}
           </div>
-
           <button className="lg:hidden" onClick={() => setIsOpen(!isOpen)}>
             <Menu className="w-6 h-6" color="#000" strokeWidth={2.5} />
           </button>
@@ -102,4 +111,6 @@ export default function Header() {
       )}
     </header>
   );
-}
+};
+
+export default Header;
