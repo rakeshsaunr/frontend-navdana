@@ -8,7 +8,7 @@ export default function Collection() {
   useEffect(() => {
     const fetchCollections = async () => {
       try {
-        const response = await axios.get("http://194.164.149.179:5000/api/v1/category");
+        const response = await axios.get("https://navdana.com/api/v1/category");
         console.log("Fetched collections:", response.data.categories);
 
         // Assuming API returns { categories: [...] }

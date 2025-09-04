@@ -77,7 +77,7 @@ export default function CartPage() {
         return;
       }
       setLoading(true);
-      await axios.post("http://194.164.149.179:5000/api/v1/user/send-otp", { email });
+      await axios.post("https://navdana.com/api/v1/user/send-otp", { email });
       setLoading(false);
       setShowEmailPopup(false);
       setShowOtpPopup(true);
@@ -151,7 +151,7 @@ export default function CartPage() {
 
     try {
       setLoading(true);
-      await axios.post("http://194.164.149.179:5000/api/v1/order", orderData, {
+      await axios.post("https://navdana.com/api/v1/order", orderData, {
         headers: { Authorization: `Bearer ${token}` },
         withCredentials: true,
       });

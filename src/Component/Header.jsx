@@ -15,7 +15,7 @@ const Header = () => {
     const fetchCategories = async () => {
       try {
         const response = await axios.get(
-          "http://194.164.149.179:5000/api/v1/category"
+          "https://navdana.com/api/v1/category"
         );
         // API se categories ka naam nikal ke set kar rahe hain
         const categoryNames = response.data.categories.map((cat) => cat.name);
