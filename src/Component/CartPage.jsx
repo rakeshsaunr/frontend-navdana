@@ -96,7 +96,7 @@ export default function CartPage() {
       setLoading(true);
 
       const res = await axios.post(
-        "http://localhost:5000/api/v1/user/verify",
+        "https://navdana.com/api/v1/user/verify",
         { name, email, otp, token: token || null },
         {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
