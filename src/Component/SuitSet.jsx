@@ -82,13 +82,13 @@ export default function SuitSet() {
 
       {/* View All Button */}
       <div className="w-full flex justify-center mt-12">
-        <button
+        {/* <button
           className="relative overflow-hidden bg-[#F0E5C7] text-black px-10 py-4 rounded font-medium shadow transition duration-300 hover:text-white"
           style={{ border: "none" }}
         >
           <span className="relative z-10">VIEW ALL</span>
           <span className="absolute inset-0 bg-[#e2d3a9] wave-animation"></span>
-        </button>
+        </button> */}
 
         <style jsx>{`
           .wave-animation {

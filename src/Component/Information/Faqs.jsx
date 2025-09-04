@@ -22,7 +22,7 @@ const faqData = [
         id: 'shipping',
         sectionTitle: 'Shipping & Delivery',
         faqs: [
-            { question: 'What is the delivery timeline?', answer: 'Delivery takes 10-15 working days within India.' },
+            { question: 'What is the delivery timeline?', answer: 'Delivery takes 0-7 working days within India.' },
             { question: 'Can I track my order?', answer: 'Yes, tracking information will be shared with you once your order is shipped.' },
         ],
     },
