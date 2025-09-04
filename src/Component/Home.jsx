@@ -1,5 +1,5 @@
 import React from "react";
-import OfferZone from "./OfferZone";   // ✅ fixed: capital Z
+import OfferZone from "./Offerzone";  
 import Collection from "./Collection";
 // import ExploreAndBuy from "./ExploreAndBuy";
 import SuitSet from "./SuitSet";
