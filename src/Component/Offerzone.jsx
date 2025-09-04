@@ -1,40 +1,34 @@
-import Slider from "react-slick";
-import offer1 from "/Images/model1.png";
-import offer2 from "/Images/model3.png";
+// src/components/OfferZone.jsx
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css"; // core Swiper styles
+import "swiper/css/autoplay";
+// import { Autoplay } from "swiper";
+
+// Use public folder paths directly
+const offer1 = "/Images/model1.png";
+const offer2 = "/Images/model3.png";
 
 export default function OfferZone() {
-  const settings = {
-    dots: false,
-    arrows: false,
-    infinite: true,
-    speed: 1000, // transition speed (ms)
-    slidesToShow: 1,
-    slidesToScroll: 1,
-    autoplay: true,
-    autoplaySpeed: 3000, // 3 seconds per slide
-    cssEase: "ease-in-out", // smoother effect
-    pauseOnHover: false,
-  };
-
   return (
     <div className="w-full h-[80vh] md:h-[90vh] overflow-hidden relative">
-  <Slider {...settings}>
-    <div className="w-full h-full">
-      <img
-        src={offer1}
-        alt="Offer 1"
-        className="w-full h-full object-cover"
-      />
+      <Swiper
+        // modules={[Autoplay]}
+        spaceBetween={0}
+        slidesPerView={1}
+        loop={true}
+        autoplay={{
+          delay: 3000,
+          disableOnInteraction: false,
+        }}
+        speed={1000}
+      >
+        <SwiperSlide>
+          <img src={offer1} alt="Offer 1" className="w-full h-full object-cover" />
+        </SwiperSlide>
+        <SwiperSlide>
+          <img src={offer2} alt="Offer 2" className="w-full h-full object-cover" />
+        </SwiperSlide>
+      </Swiper>
     </div>
-    <div className="w-full h-full">
-      <img
-        src={offer2}
-        alt="Offer 2"
-        className="w-full h-full object-cover"
-      />
-    </div>
-  </Slider>
-</div>
-
   );
 }
