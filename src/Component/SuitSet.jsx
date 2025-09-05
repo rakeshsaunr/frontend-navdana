@@ -32,21 +32,22 @@ export default function SuitSet() {
   }
 
   return (
-    <section className="px-4 py-12 bg-white">
+    <section className="px-6 py-10 bg-white">
+    <div className="container mx-auto">
       {/* Heading */}
       <h2 className="text-3xl font-bold text-center text-[#2C4A52] mb-10">
         Suit Set
       </h2>
 
       {/* Product Grid */}
-      <div className="max-w-9xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div className="max-w-8xl mx-auto grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {products.map((product) => (
-          <div key={product._id} className="group">
+          <div key={product._id} className="group bg-white rounded-lg shadow hover:shadow-lg transition flex flex-col">
             
             {/* Image Container → Entire image clickable */}
             <Link
               to={`/product/${product._id}`} 
-              className="block relative h-110 w-full overflow-hidden rounded-lg shadow bg-gray-100 group-hover:shadow-lg transition"
+              className="relative w-full aspect-[3/4] overflow-hidden rounded-lg block"
             >
               <LazyLoadImage
                 src={product.images[0]?.url}
@@ -75,7 +76,7 @@ export default function SuitSet() {
             </Link>
 
             {/* Description and Price */}
-            <div className="pt-2">
+            <div className="pt-2 px-2 pb-3 flex-1 flex flex-col justify-between">
               <h3 className="text-sm font-medium text-gray-800 mb-1 truncate">
                 {product.name}
               </h3>
@@ -108,6 +109,7 @@ export default function SuitSet() {
           }
         `}</style>
       </div>
+    </div>
     </section>
   );
 }

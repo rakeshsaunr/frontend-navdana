@@ -10,7 +10,7 @@ const offer2 = "/Images/model3.png";
 
 export default function OfferZone() {
   return (
-    <div className="w-full h-[80vh] md:h-[90vh] overflow-hidden relative">
+    <div className="w-full overflow-hidden relative">
       <Swiper
         // modules={[Autoplay]}
         spaceBetween={0}

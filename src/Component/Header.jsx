@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Menu, Search, ShoppingCart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import logo from "/Images/LOGO.PNG";
+import logo from "/logo.png";
 import { useCart } from "../context/CartContext";
 
 const Header = () => {
@@ -44,7 +44,7 @@ const Header = () => {
           <img
             src={logo}
             alt="Logo"
-            className="h-35 w-35 cursor-pointer"
+            className="h-10 w-auto mb-5 cursor-pointer"
             onClick={handleLogoClick}
           />
         </div>
