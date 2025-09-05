@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import { useCart } from "../context/CartContext";
+import { LazyLoadImage } from "react-lazy-load-image-component";
+import 'react-lazy-load-image-component/src/effects/blur.css'
+
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -99,7 +102,10 @@ export default function ProductDetails() {
             {product.images.map((img, idx) => {
               const imgSrc = img.url || img.img;
               return (
-                <img
+                <LazyLoadImage
+                height='auto'
+                width='100%'
+                effect='blur'
                   key={idx}
                   src={imgSrc}
                   alt={img.alt || `${product.name}-${idx}`}

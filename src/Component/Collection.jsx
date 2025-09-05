@@ -1,6 +1,9 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { LazyLoadImage } from "react-lazy-load-image-component";
+import 'react-lazy-load-image-component/src/effects/blur.css'
+
 
 export default function Collection() {
   const [collections, setCollections] = useState([]);
@@ -40,9 +43,13 @@ export default function Collection() {
                 className="flex flex-col items-center text-center cursor-pointer"
               >
                 <div className="w-40 h-40 rounded-full border-4 border-gray-300 flex items-center justify-center overflow-hidden shadow-md hover:scale-105 transition-transform duration-300">
-                  <img
+                  <LazyLoadImage
                     src={item.image}
                     alt={item.name}
+                    effect="blur"
+                    height='auto'
+                    width='100%'
+                    lazy='loading'
                     className="object-cover w-full h-full"
                   />
                 </div>

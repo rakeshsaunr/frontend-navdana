@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { ShoppingBag } from "lucide-react";
 import axios from "axios";
-import { Link } from "react-router-dom"; // ✅ Import Link
+import { Link } from "react-router-dom"; 
+import { LazyLoadImage } from "react-lazy-load-image-component";
+import 'react-lazy-load-image-component/src/effects/blur.css';
 
 export default function SuitSet() {
   const [products, setProducts] = useState([]);
@@ -13,7 +15,7 @@ export default function SuitSet() {
       try {
         const res = await axios.get("https://navdana.com/api/v1/product");
         if (res.data.success) {
-          setProducts(res.data.data); // products are inside "data"
+          setProducts(res.data.data); 
           console.log("Data is:", res.data.data);
         }
       } catch (error) {
@@ -40,12 +42,20 @@ export default function SuitSet() {
       <div className="max-w-9xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {products.map((product) => (
           <div key={product._id} className="group">
-            {/* Image Container */}
-            <div className="relative h-110 w-full overflow-hidden rounded-lg shadow bg-gray-100 group-hover:shadow-lg transition">
-              <img
+            
+            {/* Image Container → Entire image clickable */}
+            <Link
+              to={`/product/${product._id}`} 
+              className="block relative h-110 w-full overflow-hidden rounded-lg shadow bg-gray-100 group-hover:shadow-lg transition"
+            >
+              <LazyLoadImage
                 src={product.images[0]?.url}
                 alt={product.images[0]?.alt || product.name}
+                effect="blur"
+                width="100%"
+                height="auto"
                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                lazy="loading"
               />
 
               {/* Bottom Left: Price */}
@@ -58,14 +68,11 @@ export default function SuitSet() {
                 <ShoppingBag className="w-4 h-4" />
               </div>
 
-              {/* Hover Quick View → Now Clickable */}
-              <Link
-                to={`/product/${product._id}`} // ✅ Navigate to product details
-                className="absolute bottom-2 left-2 right-2 bg-[#2C4A52] text-white text-center py-3 opacity-0 group-hover:opacity-100 transition rounded-[8px]"
-              >
+              {/* Hover Quick View */}
+              <div className="absolute bottom-2 left-2 right-2 bg-[#2C4A52] text-white text-center py-3 opacity-0 group-hover:opacity-100 transition rounded-[8px]">
                 Quick view
-              </Link>
-            </div>
+              </div>
+            </Link>
 
             {/* Description and Price */}
             <div className="pt-2">
@@ -80,7 +87,7 @@ export default function SuitSet() {
         ))}
       </div>
 
-      {/* View All Button */}
+      {/* View All Button (Optional, commented out) */}
       <div className="w-full flex justify-center mt-12">
         {/* <button
           className="relative overflow-hidden bg-[#F0E5C7] text-black px-10 py-4 rounded font-medium shadow transition duration-300 hover:text-white"
