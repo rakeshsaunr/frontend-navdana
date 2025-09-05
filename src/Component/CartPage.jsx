@@ -409,7 +409,7 @@ export default function CartPage() {
               >
                 <option value="card">Card</option>
                 <option value="paypal">PayPal</option>
-                <option value="upi">UPI</option>
+                {/* <option value="upi">UPI</option> */}
               </select>
 
               <div className="flex justify-between mt-6">
