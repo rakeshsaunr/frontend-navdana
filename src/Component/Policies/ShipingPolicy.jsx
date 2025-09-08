@@ -35,7 +35,7 @@ export default function App() {
       }}
     >
       <h1 className="text-center mb-6 text-4xl md:text-5xl font-semibold text-[#2c1810] tracking-widest">
-        NAVDANA
+        NAVDANA APPARELS
       </h1>
       <h2 className="text-center font-normal text-2xl md:text-3xl text-[#b48a78] mb-2 italic">
         Shipping & Returns Policy
@@ -61,7 +61,7 @@ export default function App() {
               Orders processed within <span className="text-[#8b5a3c] font-semibold">2–4 days</span>
             </li>
             <li>
-              Delivered in <span className="text-[#8b5a3c] font-semibold">10–15 working days</span>
+              Delivered in <span className="text-[#8b5a3c] font-semibold">0–7 working days</span>
             </li>
             <li>
               Tracking details shared once dispatched
@@ -101,7 +101,7 @@ export default function App() {
           </h3>
           <ul className="list-disc ml-7 text-gray-700 space-y-1 text-lg">
             <li>
-              Refunds for NAVDANA cancellations processed within <span className="text-[#8b5a3c] font-semibold">10–15 business days</span>
+              Refunds for NAVDANA APPARELS cancellations processed within <span className="text-[#8b5a3c] font-semibold">10–15 business days</span>
             </li>
           </ul>
         </section>
@@ -111,7 +111,7 @@ export default function App() {
             <span role="img" aria-label="Delays">⚠️</span> Delays & Liability
           </h3>
           <ul className="list-disc ml-7 text-gray-700 space-y-1 text-lg">
-            <li>NAVDANA is not liable for delays beyond its control</li>
+            <li>NAVDANA APPARELS is not liable for delays beyond its control</li>
           </ul>
         </section>
 

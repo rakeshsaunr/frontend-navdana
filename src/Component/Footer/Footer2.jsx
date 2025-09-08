@@ -231,7 +231,7 @@ const Footer = () => {
                         <div className="flex flex-col md:flex-row justify-between items-center w-full gap-4">
                             {/* Copyright */}
                             <p className="text-sm text-gray-600 mb-2 md:mb-0 text-center md:text-left">
-                                © 2025 Navdana. All rights reserved.
+                                © 2025 Navdana Apparels. All rights reserved.
                             </p>
                             {/* Follow Us Row */}
                             <div className="flex flex-wrap items-center justify-center space-x-2 mb-2 md:mb-0">

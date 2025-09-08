@@ -37,7 +37,7 @@ const faqData = [
         id: 'refunds',
         sectionTitle: 'Refunds',
         faqs: [
-            { question: 'How long does it take to get a refund?', answer: 'Refunds are processed within 10–15 business days after we receive your returned item.' },
+            { question: 'How long does it take to get a refund?', answer: 'Refunds are processed within 0–7 business days after we receive your returned item.' },
         ],
     },
     {

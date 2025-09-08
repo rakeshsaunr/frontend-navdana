@@ -4,7 +4,7 @@ const terms = [
   {
     title: "Definitions",
     content: [
-      "“NAVDANA,” “we,” “us,” or “our” refers to NAVDANA Pvt. Ltd., with its registered office at [Insert Address].",
+      "“NAVDANA,” “we,” “us,” or “our” refers to NAVDANA APPARELS Pvt. Ltd., with its registered office at [Insert Address].",
       "“You,” “your,” “Customer,” or “User” refers to any person accessing or using the website or purchasing products from us.",
     ],
     type: "list",
@@ -22,7 +22,7 @@ const terms = [
   {
     title: "Use of Content",
     content:
-      "All content on our website is owned by or licensed to NAVDANA.",
+      "All content on our website is owned by or licensed to NAVDANA APPARELS.",
   },
   {
     title: "Product Information & Availability",
@@ -42,7 +42,7 @@ const terms = [
     title: "Cancellations, Refunds, Returns & Exchanges",
     content: [
       "Customers can cancel within 24 hours of placing an order.",
-      "Refunds for cancellations by NAVDANA will be processed within 10–15 business days.",
+      "Refunds for cancellations by NAVDANA APPARELS will be processed within 0–7 business days.",
       "Exchanges are permitted within 7 days for size or quality issues with tags intact.",
     ],
     type: "list",
@@ -50,7 +50,7 @@ const terms = [
   {
     title: "Shipment & Delivery",
     content:
-      "Orders are shipped via trusted couriers. NAVDANA is not liable for delays beyond its control.",
+      "Orders are shipped via trusted couriers. NAVDANA APPARELS is not liable for delays beyond its control.",
   },
   {
     title: "Disclaimer of Warranties & Limitation of Liability",
@@ -60,7 +60,7 @@ const terms = [
   {
     title: "Intellectual Property",
     content:
-      "All trademarks and logos are NAVDANA's property.",
+      "All trademarks and logos are NAVDANA APPARELS 's property.",
   },
   {
     title: "Governing Law",

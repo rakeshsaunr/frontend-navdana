@@ -18,7 +18,7 @@ export default function App() {
       }}
     >
       <h1 className="text-center mb-6 text-4xl md:text-5xl font-semibold text-[#2c1810] tracking-widest">
-        About NAVDANA
+        About NAVDANA APPARELS  
       </h1>
       <h2 className="text-center font-normal text-xl md:text-2xl text-[#b48a78] mb-8 italic">
         Celebrating women, one stitch at a time.
