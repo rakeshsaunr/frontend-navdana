@@ -29,6 +29,8 @@ import ReturnsExchanges from './Component/Policies/ReturnsExchanges'
 import ShipingPolicy from './Component/Policies/ShipingPolicy'
 import PrivacyPolicy from './Component/Policies/PrivacyPolicy';
 import CancelPolicy from './Component/Policies/CancelPolicy'
+import CollectionPage from "./Component/CollectionPage";
+import AllProducts from './Component/collections/AllProducts'
 
 //Chatpopup
 import ChatPopup from "./Component/ChatPopup";
@@ -60,17 +62,20 @@ function App() {
             <Route path="/career" element={<Career />} />
               {/* Product Details Route */}
               <Route path="/product/:id" element={<ProductDetails />} />
-
+              <Route path="/all-products" element={<AllProducts />} />
               {/* Cart Route */}
               <Route path="/cart" element={<CartPage />} />
-
+              <Route path="/collection-pages/:id" element={<CollectionPage />} />
               {/* Catch-all */}
-              <Route path="*" element={<ComingSoon />} />
+              {/* <Route path="*" element={<ComingSoon />} /> */}
               {/* Home route (default page content) */}
             <Route
               path="/"
               element={<Home />}
             />
+
+            <Route
+            path='/product/:id' element={<ProductDetails/>}  />
             </Routes>
           </main>
           <Footer2 />

@@ -2,29 +2,27 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { LazyLoadImage } from "react-lazy-load-image-component";
-import 'react-lazy-load-image-component/src/effects/blur.css'
-
+import 'react-lazy-load-image-component/src/effects/blur.css';
 
 export default function Collection() {
   const [collections, setCollections] = useState([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [slidesToShow, setSlidesToShow] = useState(2);
+
   useEffect(() => {
     const fetchCollections = async () => {
       try {
         const response = await axios.get("https://navdana.com/api/v1/category");
-        console.log("Fetched collections:", response.data.categories);
-
         // Assuming API returns { categories: [...] }
-        setCollections(response.data.categories);
+        setCollections(Array.isArray(response.data.categories) ? response.data.categories : []);
       } catch (error) {
         console.error("Error fetching collections:", error);
       }
     };
-
     fetchCollections();
   }, []);
- // Dynamically set slidesToShow based on screen width (mobile only)
+
+  // Dynamically set slidesToShow based on screen width
   useEffect(() => {
     function updateSlidesToShow() {
       if (window.innerWidth < 400) {
@@ -39,9 +37,10 @@ export default function Collection() {
     window.addEventListener("resize", updateSlidesToShow);
     return () => window.removeEventListener("resize", updateSlidesToShow);
   }, []);
-  // Only show collections except "All Products"
+
+  // Only show collections except "All Products" and where isActive is true
   const filteredCollections = collections.filter(
-    (item) => item.name !== "All Products"
+    (item) => item.name !== "All Products" && item.isActive
   );
 
   const totalSlides = filteredCollections.length;
@@ -67,10 +66,8 @@ export default function Collection() {
     let end = currentSlide + slidesToShow;
     if (end > totalSlides) {
       end = end - totalSlides;
-      return `${start}/${end}`;
-    } else {
-      return `${start}/${end}`;
     }
+    return `${start}/${end}`;
   };
 
   const handlePrev = () => {
@@ -95,11 +92,11 @@ export default function Collection() {
         SHOP BY COLLECTION
       </h2>
 
-      {collections.length === 0 ? (
-        <p className="text-center text-gray-500">Loading collections...</p>
+      {filteredCollections.length === 0 ? (
+        <p className="text-center text-gray-500">No collections available.</p>
       ) : (
         <>
-        {/* Mobile: Custom round slider with minimal gap */}
+          {/* Mobile: Custom round slider with minimal gap */}
           <div className="block sm:hidden w-full relative">
             {totalSlides > 0 && (
               <div className="flex flex-col items-center">
@@ -108,12 +105,12 @@ export default function Collection() {
                     className="flex flex-row justify-center w-full transition-all"
                     style={{
                       minHeight: "200px",
-                      gap: "12px", // gap reduced for mobile
+                      gap: "12px",
                     }}
                   >
                     {getVisibleCollections().map((item, idx) => (
                       <Link
-                        to="/coming-soon"
+                        to={`/collection-pages/${item._id}`}
                         key={item._id || item.name || idx}
                         className="full-unstyled-link::after"
                         style={{ minWidth: 0 }}
@@ -123,7 +120,7 @@ export default function Collection() {
                             effect="blur"
                             src={item.image}
                             alt={item.name}
-                            lazy='loading'
+                            loading="lazy"
                             className="w-32 h-32 object-cover rounded-full border border-gray-200 shadow"
                             style={{
                               aspectRatio: "1/1",
@@ -173,38 +170,14 @@ export default function Collection() {
                 </div>
               </div>
             )}
-        </div>
-        {/* <div className="flex flex-wrap justify-center gap-6 px-4">
-          {collections
-            .filter((item) => item.name !== "All Products") // 👈 hide "All Product"
-            .map((item, index) => (
-              <Link
-                to="/coming-soon"
-                key={index}
-                className="full-unstyled-link::after cursor-pointer"
-              >
-                <div className="flex flex-col items-center">
-                  <LazyLoadImage
-                    src={item.image}
-                    alt={item.name}
-                    effect="blur"
-                    height='auto'
-                    width='100%'
-                    lazy='loading'
-                    className="w-32 h-32 object-cover rounded-full border border-gray-200 shadow"
-                  />
-                </div>
-                <p className="mt-2 text-gray-800 font-medium">{item.name}</p>
-              </Link>
-            ))}
+          </div>
 
-        </div> */}
-      {/* Desktop Grid */}
+          {/* Desktop Grid */}
           <div className="hidden sm:flex flex-wrap justify-center gap-6 px-4">
             {filteredCollections.map((item, index) => (
               <Link
-                to="/coming-soon"
-                key={index}
+                to={`/collection-pages/${item._id}`}
+                key={item._id || item.name || index}
                 className="full-unstyled-link::after"
               >
                 <div className="flex flex-col items-center">
@@ -212,7 +185,7 @@ export default function Collection() {
                     src={item.image}
                     alt={item.name}
                     effect="blur"
-                    lazy='loading'
+                    loading="lazy"
                     className="w-48 h-48 object-cover rounded-full"
                   />
                 </div>
@@ -222,7 +195,7 @@ export default function Collection() {
               </Link>
             ))}
           </div>
-      </>
+        </>
       )}
     </section>
   );

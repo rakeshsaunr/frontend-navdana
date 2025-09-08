@@ -1,45 +1,49 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useParams, Link } from "react-router-dom";
+import axios from "axios";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import 'react-lazy-load-image-component/src/effects/blur.css';
 
-export default function AllProducts() {
+// Helper function to capitalize all letters
+function toAllCaps(str) {
+  if (!str) return "";
+  return str.toUpperCase();
+}
+
+export default function CollectionPage() {
+  const { id } = useParams();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [categoryName, setCategoryName] = useState("");
 
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [productsPerPage] = useState(12);
+  const API_PRODUCT = `https://navdana.com/api/v1/product/category/${id}`;
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch("https://navdana.com/api/v1/product");
-        const data = await res.json();
-        if (data.success && Array.isArray(data.data)) {
-          setProducts(data.data);
+        const res = await axios.get(API_PRODUCT);
+        let productList = [];
+        if (Array.isArray(res.data)) productList = res.data;
+        else if (Array.isArray(res.data.products)) productList = res.data.products;
+        else if (Array.isArray(res.data.data)) productList = res.data.data;
+        setProducts(productList);
+
+        // Try to get category name from the first product, fallback to id
+        if (productList.length > 0) {
+          setCategoryName(productList[0].category?.name || productList[0].category || id);
         } else {
-          setProducts([]);
+          setCategoryName(id);
         }
       } catch (error) {
+        console.error(error);
         setProducts([]);
+        setCategoryName(id);
       } finally {
         setLoading(false);
       }
     };
     fetchProducts();
-  }, []);
-
-  // Pagination logic
-  const indexOfLastProduct = currentPage * productsPerPage;
-  const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-  const currentProducts = products.slice(indexOfFirstProduct, indexOfLastProduct);
-  const totalPages = Math.ceil(products.length / productsPerPage);
-
-  const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  }, [id]);
 
   if (loading) {
     return <p className="text-center py-10">Loading products...</p>;
@@ -52,17 +56,32 @@ export default function AllProducts() {
   return (
     <section className="px-6 py-10 bg-white">
       <div className="container mx-auto">
+        {/* Breadcrumb */}
+        <div className="mb-8">
+          <nav className="flex items-center space-x-2 text-base">
+            <Link to="/" className="text-gray-400 hover:text-gray-600">Home</Link>
+            <span className="text-gray-400">/</span>
+            <span className="text-[#42515A] font-medium">
+              {toAllCaps(categoryName.replace(/-/g, " "))}
+            </span>
+          </nav>
+        </div>
+
         {/* Heading */}
         <h2 className="text-3xl font-medium text-center mb-13">
-          ALL PRODUCTS
+          {categoryName
+            ? toAllCaps(categoryName.replace(/-/g, " "))
+            : "PRODUCTS"}
         </h2>
 
         {/* Product Grid */}
         <div className="max-w-8xl mx-auto grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {currentProducts.map((product) => (
+          {products.map((product) => (
             <div key={product._id} className="group bg-white rounded-lg shadow hover:shadow-lg transition flex flex-col">
+              
+              {/* Image Container → Entire image clickable */}
               <Link
-                to={`/product/${product._id}`}
+                to={`/product/${product._id}`} 
                 className="relative w-full aspect-[3/4] overflow-hidden rounded-lg block"
               >
                 <LazyLoadImage
@@ -94,30 +113,13 @@ export default function AllProducts() {
               {/* Description and Price */}
               <div className="pt-2 px-2 pb-3 flex-1 flex flex-col justify-between">
                 <h3 className="text-sm font-medium text-gray-800 mb-1 truncate">
-                  {product.name}
+                  {toAllCaps(product.name)}
                 </h3>
                 <div className="text-sm font-semibold text-pink-600">
                   ₹{product.price}
                 </div>
               </div>
             </div>
-          ))}
-        </div>
-
-        {/* Pagination Controls */}
-        <div className="flex justify-center mt-10 space-x-2">
-          {Array.from({ length: totalPages }, (_, idx) => (
-            <button
-              key={idx + 1}
-              onClick={() => handlePageChange(idx + 1)}
-              className={`px-4 py-2 rounded border ${
-                currentPage === idx + 1
-                  ? "bg-[#2C4A52] text-white"
-                  : "bg-white text-gray-800"
-              } transition`}
-            >
-              {idx + 1}
-            </button>
           ))}
         </div>
       </div>

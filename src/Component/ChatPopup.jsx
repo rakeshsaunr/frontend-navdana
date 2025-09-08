@@ -4,7 +4,7 @@ import { QRCodeCanvas } from "qrcode.react";
 // QR Modal
 const QRCode = ({ platform, onClose }) => {
   const whatsappUrl = "https://wa.me/919289076664";
-  const instagramUrl = "https://instagram.com/"; // Replace with your IG link
+  const instagramUrl = "https://instagram.com/navdanaa"; // Replace with your IG link
 
   return (
     <div className="flex flex-col items-center justify-center h-full w-full">

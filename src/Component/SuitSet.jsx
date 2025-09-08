@@ -35,8 +35,8 @@ export default function SuitSet() {
     <section className="px-6 py-10 bg-white">
     <div className="container mx-auto">
       {/* Heading */}
-      <h2 className="text-3xl font-bold text-center text-[#2C4A52] mb-10">
-        Suit Set
+      <h2 className="text-3xl font-medium text-center mb-13">
+        WOMEN'S WEAR
       </h2>
 
       {/* Product Grid */}
