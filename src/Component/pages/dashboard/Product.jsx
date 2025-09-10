@@ -1,10 +1,6 @@
-// src/pages/Product.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import namer from "color-namer";
-
-// Replace with your actual token
-const TOKEN =  localStorage.getItem("token");
 
 // ColorNameConverter function
 const ColorNameConverter = (hex) => {
@@ -18,6 +14,9 @@ const ColorNameConverter = (hex) => {
 
 const API_URL = "https://navdana.com/api/v1/product";
 const CATEGORY_API = "https://navdana.com/api/v1/category";
+
+// Replace this with your actual token
+const TOKEN = "YOUR_BEARER_TOKEN_HERE"; // or fetch from localStorage/session
 
 // Default variant row
 const defaultVariantRow = () => ({
@@ -52,13 +51,23 @@ const Product = () => {
     fetchCategories();
   }, []);
 
+  const normalizeVariants = (variant) => {
+    if (Array.isArray(variant)) return variant;
+    if (variant && typeof variant === "object") return [variant];
+    return [];
+  };
+
   const fetchProducts = async () => {
     setLoading(true);
     try {
       const res = await axios.get(API_URL, {
         headers: { Authorization: `Bearer ${TOKEN}` },
       });
-      setProducts(res.data?.data || []);
+      const prods = (res.data?.data || []).map((prod) => ({
+        ...prod,
+        variant: normalizeVariants(prod.variant),
+      }));
+      setProducts(prods);
     } catch (error) {
       console.error("Error fetching products:", error);
     }
@@ -207,11 +216,11 @@ const Product = () => {
         }
       });
 
-      const config = { 
-        headers: { 
+      const config = {
+        headers: {
           "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${TOKEN}`
-        } 
+          Authorization: `Bearer ${TOKEN}`,
+        },
       };
 
       if (editingId) {
@@ -262,8 +271,8 @@ const Product = () => {
         : [{ file: null, alt: "" }],
       category: product.category?._id || "",
       price: product.price || "",
-      variants: Array.isArray(product.variant)
-        ? product.variant.map((v) => ({
+      variants: normalizeVariants(product.variant).length > 0
+        ? normalizeVariants(product.variant).map((v) => ({
             color: v.color || "#000000",
             colorName: v.colorName || ColorNameConverter(v.color || "#000000"),
             sku: v.sku || "",
@@ -292,7 +301,6 @@ const Product = () => {
     resetForm();
     setShowFormPage(false);
   };
-
 
   // Main render
   return (
