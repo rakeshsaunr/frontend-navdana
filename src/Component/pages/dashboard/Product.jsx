@@ -15,9 +15,6 @@ const ColorNameConverter = (hex) => {
 const API_URL = "https://navdana.com/api/v1/product";
 const CATEGORY_API = "https://navdana.com/api/v1/category";
 
-// Replace this with your actual token
-const TOKEN = "YOUR_BEARER_TOKEN_HERE"; // or fetch from localStorage/session
-
 // Default variant row
 const defaultVariantRow = () => ({
   color: "#000000",
@@ -51,6 +48,7 @@ const Product = () => {
     fetchCategories();
   }, []);
 
+  // Fix: Always ensure product.variant is an array for display
   const normalizeVariants = (variant) => {
     if (Array.isArray(variant)) return variant;
     if (variant && typeof variant === "object") return [variant];
@@ -60,9 +58,8 @@ const Product = () => {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(API_URL, {
-        headers: { Authorization: `Bearer ${TOKEN}` },
-      });
+      const res = await axios.get(API_URL);
+      // Fix: Ensure each product.variant is always an array
       const prods = (res.data?.data || []).map((prod) => ({
         ...prod,
         variant: normalizeVariants(prod.variant),
@@ -76,9 +73,7 @@ const Product = () => {
 
   const fetchCategories = async () => {
     try {
-      const res = await axios.get(CATEGORY_API, {
-        headers: { Authorization: `Bearer ${TOKEN}` },
-      });
+      const res = await axios.get(CATEGORY_API);
       let cats = res.data?.data || res.data || [];
       if (!Array.isArray(cats)) {
         if (Array.isArray(res.data?.categories)) {
@@ -196,6 +191,7 @@ const Product = () => {
     }
     setLoading(true);
     try {
+      // Ensure all variants have colorName filled using ColorNameConverter
       const variantsWithColorName = formData.variants.map((v) => ({
         ...v,
         colorName: v.colorName && v.colorName.trim() !== "" ? v.colorName : ColorNameConverter(v.color),
@@ -216,10 +212,12 @@ const Product = () => {
         }
       });
 
+      // Fetch token from localStorage
+      const token = localStorage.getItem("token");
       const config = {
         headers: {
           "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${TOKEN}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       };
 
@@ -246,9 +244,14 @@ const Product = () => {
     if (window.confirm("Are you sure you want to delete this product?")) {
       setLoading(true);
       try {
-        await axios.delete(`${API_URL}/${id}`, {
-          headers: { Authorization: `Bearer ${TOKEN}` },
-        });
+        // Fetch token from localStorage
+        const token = localStorage.getItem("token");
+        const config = {
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        };
+        await axios.delete(`${API_URL}/${id}`, config);
         setSuccessMsg("Product deleted successfully!");
         fetchProducts();
       } catch (error) {
@@ -651,7 +654,16 @@ const Product = () => {
       ) : (
         <>
           {/* Add Product Button */}
-          <div className="flex justify-end mb-6">
+          <div
+            className="flex justify-end mb-6 z-30"
+            style={{
+              position: "sticky",
+              top: 0,
+              background: "linear-gradient(to right, #f0f4ff 0%, #fff0f6 100%)",
+              paddingTop: "1.5rem",
+              paddingBottom: "1.5rem",
+            }}
+          >
             <button
               type="button"
               onClick={openAddForm}
@@ -667,13 +679,83 @@ const Product = () => {
             <table className="w-full border-separate border-spacing-y-2 text-[15px]">
               <thead>
                 <tr>
-                  <th className="px-5 py-3 text-left font-semibold text-blue-900 bg-blue-100 rounded-tl-xl">Name</th>
-                  <th className="px-5 py-3 text-left font-semibold text-blue-900 bg-blue-100">Category</th>
-                  <th className="px-5 py-3 text-left font-semibold text-blue-900 bg-blue-100">Price</th>
-                  <th className="px-5 py-3 text-left font-semibold text-blue-900 bg-blue-100">Variants</th>
-                  <th className="px-5 py-3 text-left font-semibold text-blue-900 bg-blue-100">Images</th>
-                  <th className="px-5 py-3 text-left font-semibold text-blue-900 bg-blue-100">Active</th>
-                  <th className="px-5 py-3 text-left font-semibold text-blue-900 bg-blue-100 rounded-tr-xl">Actions</th>
+                  <th
+                    className="px-5 py-3 text-left font-semibold text-blue-900 bg-blue-100 rounded-tl-xl"
+                    style={{
+                      position: "sticky",
+                      top: 0,
+                      zIndex: 10,
+                      background: "#DBEAFE", // bg-blue-100
+                    }}
+                  >
+                    Name
+                  </th>
+                  <th
+                    className="px-5 py-3 text-left font-semibold text-blue-900 bg-blue-100"
+                    style={{
+                      position: "sticky",
+                      top: 0,
+                      zIndex: 10,
+                      background: "#DBEAFE",
+                    }}
+                  >
+                    Category
+                  </th>
+                  <th
+                    className="px-5 py-3 text-left font-semibold text-blue-900 bg-blue-100"
+                    style={{
+                      position: "sticky",
+                      top: 0,
+                      zIndex: 10,
+                      background: "#DBEAFE",
+                    }}
+                  >
+                    Price
+                  </th>
+                  <th
+                    className="px-5 py-3 text-left font-semibold text-blue-900 bg-blue-100"
+                    style={{
+                      position: "sticky",
+                      top: 0,
+                      zIndex: 10,
+                      background: "#DBEAFE",
+                    }}
+                  >
+                    Variants
+                  </th>
+                  <th
+                    className="px-5 py-3 text-left font-semibold text-blue-900 bg-blue-100"
+                    style={{
+                      position: "sticky",
+                      top: 0,
+                      zIndex: 10,
+                      background: "#DBEAFE",
+                    }}
+                  >
+                    Images
+                  </th>
+                  <th
+                    className="px-5 py-3 text-left font-semibold text-blue-900 bg-blue-100"
+                    style={{
+                      position: "sticky",
+                      top: 0,
+                      zIndex: 10,
+                      background: "#DBEAFE",
+                    }}
+                  >
+                    Active
+                  </th>
+                  <th
+                    className="px-5 py-3 text-left font-semibold text-blue-900 bg-blue-100 rounded-tr-xl"
+                    style={{
+                      position: "sticky",
+                      top: 0,
+                      zIndex: 10,
+                      background: "#DBEAFE",
+                    }}
+                  >
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
