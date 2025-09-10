@@ -55,8 +55,8 @@ export default function Footer1() {
             </p>
             <p className="text-sm text-gray-300">
               Phone:{" "}
-              <a href="tel:+911234567890" className="underline">
-                +91 12345 67890
+              <a href="tel:+919311120477" className="underline">
+                +91 9311120477
               </a>
             </p>
           </div>
