@@ -25,6 +25,7 @@ const defaultVariantRow = () => ({
 });
 
 const Product = () => {
+  console.log("Product Route Hit")
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
@@ -59,6 +60,7 @@ const Product = () => {
     setLoading(true);
     try {
       const res = await axios.get(API_URL);
+      console.log("Logs in the Product Section",res.data.data)
       // Fix: Ensure each product.variant is always an array
       const prods = (res.data?.data || []).map((prod) => ({
         ...prod,
