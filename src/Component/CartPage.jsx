@@ -13,7 +13,7 @@ export default function CartPage() {
     postalCode: "",
     country: "",
     phone: "",
-    paymentMethod: "card",
+    paymentMethod: "razorpay",
   });
   const [loading, setLoading] = useState(false);
 
@@ -29,10 +29,12 @@ export default function CartPage() {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
 
+  const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
   // --- Cart handlers ---
   const handleIncrement = (item) => {
     if (item.quantity < (item.stock || 1)) {
-      addToCart(item, 1); // ✅ add one more of same variant
+      addToCart(item, 1);
     } else {
       alert("No more stock available for this variant!");
     }
@@ -46,13 +48,11 @@ export default function CartPage() {
     removeFromCart(item._id, item.size, item.color, item.sku, true);
   };
 
-  const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-
   const handleChange = (e) => {
     setShippingInfo({ ...shippingInfo, [e.target.name]: e.target.value });
   };
 
-  // --- Checkout flow ---
+  // --- Checkout flow (name/email/otp) ---
   const startCheckout = () => {
     if (!user) {
       setShowNamePopup(true);
@@ -77,7 +77,7 @@ export default function CartPage() {
         return;
       }
       setLoading(true);
-      await axios.post(" https://navdana.com/api/v1/user/send-otp", { email });
+      await axios.post("http://localhost:5000/api/v1/user/send-otp", { email });
       setLoading(false);
       setShowEmailPopup(false);
       setShowOtpPopup(true);
@@ -96,7 +96,7 @@ export default function CartPage() {
       setLoading(true);
 
       const res = await axios.post(
-        " https://navdana.com/api/v1/user/verify",
+        "http://localhost:5000/api/v1/user/verify",
         { name, email, otp, token: token || null },
         {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -121,47 +121,135 @@ export default function CartPage() {
     }
   };
 
+  // ---------- Checkout with Razorpay ----------
   const handleCheckout = async () => {
-    const { fullName, address, city, postalCode, country, paymentMethod } = shippingInfo;
-    if (!fullName || !address || !city || !postalCode || !country || !paymentMethod) {
+    const { fullName, address, city, postalCode, country } = shippingInfo;
+    if (!fullName || !address || !city || !postalCode || !country) {
       alert("Please fill all required shipping details");
       return;
     }
 
-    const orderData = {
-      user: user?._id,
-      items: cart.map((item) => ({
-        product: item._id,
-        name: item.name,
-        quantity: item.quantity,
-        price: item.price,
-        size: item.size || "",
-        color: item.color || "",
-        sku: item.sku || "",
-      })),
-      shippingAddress: shippingInfo,
-      paymentMethod,
-      prices: {
-        itemsPrice: totalPrice,
-        taxPrice: totalPrice * 0.05,
-        shippingPrice: 50,
-        totalPrice: totalPrice * 1.05 + 50,
-      },
-    };
-
     try {
       setLoading(true);
-      await axios.post(" https://navdana.com/api/v1/order", orderData, {
-        headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true,
+
+      // 1) Create order on backend (DB order + Razorpay order)
+      const createOrderPayload = {
+        items: cart.map((item) => ({
+          product: item._id,
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          size: item.size || "",
+          color: item.color || "",
+          sku: item.sku || "",
+        })),
+        shippingAddress: shippingInfo,
+      };
+
+      const orderRes = await axios.post(
+        "http://localhost:5000/api/v1/order",
+        createOrderPayload,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      console.log("Order Reapose is:",orderRes)
+
+      // Backend must return: { order, razorpayOrder, key }
+      const { order, razorpayOrder, key } = orderRes.data;
+
+      if (!razorpayOrder || !key) {
+        setLoading(false);
+        alert("Failed to initialize payment. Try again.");
+        return;
+      }
+
+      // 2) Dynamically load Razorpay SDK (if not present)
+      if (!window.Razorpay) {
+        const script = document.createElement("script");
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.async = true;
+        document.body.appendChild(script);
+        await new Promise((resolve, reject) => {
+          script.onload = resolve;
+          script.onerror = () => reject(new Error("Razorpay SDK failed to load"));
+        });
+      }
+
+      // 3) Configure Razorpay checkout options
+      const options = {
+        key, // public key returned by backend
+        amount: razorpayOrder.amount,
+        currency: razorpayOrder.currency,
+        name: "Navdana Store",
+        description: `Order #${order._id}`,
+        order_id: razorpayOrder.id,
+        handler: async function (response) {
+          // This handler runs after successful payment in Razorpay popup
+          try {
+            setLoading(true);
+            // 4) Verify payment on backend
+            const verifyRes = await axios.post(
+              "http://localhost:5000/api/v1/order/verify",
+              {
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature,
+                // optionally send DB order id so backend can also use it
+                orderId: order._id,
+              },
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            setLoading(false);
+
+            if (verifyRes.data && verifyRes.data.success) {
+              alert("Payment Successful & Order Placed!");
+              clearCart();
+              setShowCheckout(false);
+            } else {
+              console.error("Verify response:", verifyRes.data);
+              alert("Payment verification failed! If amount was charged, contact support.");
+            }
+          } catch (err) {
+            setLoading(false);
+            console.error("Verify error:", err);
+            alert("Payment verification failed. Please try again or contact support.");
+          }
+        },
+        prefill: {
+          name: shippingInfo.fullName || user?.name || "",
+          email: user?.email || "",
+          contact: shippingInfo.phone || (user?.phone || ""),
+        },
+        notes: {
+          orderId: order?._id || "", // optional
+        },
+        theme: { color: "#000000" },
+      };
+
+      // 4) Open Razorpay popup
+      const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", function (resp) {
+        // optional: handle payment failure event
+        console.error("Razorpay payment failed:", resp);
+        alert("Payment failed. Please try again.");
       });
+      rzp.open();
+
+      // keep loading false because popup is open
       setLoading(false);
-      alert("Order placed successfully!");
-      clearCart(); // ✅ empty cart after success
-      setShowCheckout(false);
     } catch (err) {
+      console.error("Create order / checkout error:", err);
       setLoading(false);
-      alert("Failed to place order. Try again.");
+
+      // give user a helpful error
+      if (err.response && err.response.data && err.response.data.message) {
+        alert("Checkout failed: " + err.response.data.message);
+      } else {
+        alert("Checkout failed, try again.");
+      }
     }
   };
 
@@ -249,8 +337,7 @@ export default function CartPage() {
         </button>
       </div>
 
-      {/* --- Popups --- */}
-      {/* Name popup */}
+      {/* Popups (Name → Email → OTP → Checkout) */}
       {showNamePopup && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl max-w-md w-full p-6">
@@ -280,7 +367,6 @@ export default function CartPage() {
         </div>
       )}
 
-      {/* Email popup */}
       {showEmailPopup && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl max-w-md w-full p-6">
@@ -310,7 +396,6 @@ export default function CartPage() {
         </div>
       )}
 
-      {/* OTP popup */}
       {showOtpPopup && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl max-w-md w-full p-6">
@@ -340,13 +425,12 @@ export default function CartPage() {
         </div>
       )}
 
-      {/* Checkout popup */}
       {showCheckout && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl max-w-lg w-full p-8 relative">
             <h2 className="text-2xl font-bold mb-6">Shipping Details</h2>
 
-            <form className="flex flex-col gap-4">
+            <form className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
               <input
                 type="text"
                 placeholder="Full Name"
@@ -401,17 +485,6 @@ export default function CartPage() {
                 className="border px-3 py-2 rounded w-full"
               />
 
-              <select
-                name="paymentMethod"
-                value={shippingInfo.paymentMethod}
-                onChange={handleChange}
-                className="border px-3 py-2 rounded w-full"
-              >
-                <option value="card">Card</option>
-                <option value="paypal">PayPal</option>
-                {/* <option value="upi">UPI</option> */}
-              </select>
-
               <div className="flex justify-between mt-6">
                 <button
                   type="button"
@@ -424,8 +497,9 @@ export default function CartPage() {
                   type="button"
                   onClick={handleCheckout}
                   className="px-6 py-2 bg-black text-white rounded hover:bg-gray-800 transition"
+                  disabled={loading}
                 >
-                  {loading ? "Processing..." : "Place Order"}
+                  {loading ? "Processing..." : "Pay Now"}
                 </button>
               </div>
             </form>

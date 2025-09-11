@@ -28,7 +28,7 @@ export default function ProductDetails() {
   useEffect(() => {
     async function fetchProduct() {
       try {
-        const res = await axios.get(`https://navdana.com/api/v1/product/${id}`);
+        const res = await axios.get(`http://localhost:5000/api/v1/product/${id}`);
         setProduct(res.data.data);
 
         if (res.data.data.images?.length > 0) {

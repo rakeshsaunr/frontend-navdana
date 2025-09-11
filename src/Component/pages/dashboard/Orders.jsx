@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-const API_URL = "https://myapp.loca.lt/api/v1/order";
+const API_URL = "http://localhost:5000/api/v1/order";
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -14,6 +14,7 @@ const Orders = () => {
   const fetchOrders = async () => {
     try {
       const res = await axios.get(API_URL);
+      console.log(res.data)
       setOrders(res.data?.data || []);
     } catch (error) {
       console.error("Error fetching orders:", error);
