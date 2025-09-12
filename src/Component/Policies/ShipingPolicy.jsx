@@ -123,13 +123,13 @@ export default function App() {
             <div className="mb-2">
               <strong>Email:</strong>{' '}
               <a
-                href="mailto:support@navdana.com"
-                className={`underline transition-all duration-300 hover:text-[#8b5a3c] ${copiedLink === 'support@navdana.com' ? 'text-green-600' : 'text-[#b48a78]'}`}
-                onClick={(e) => handleCopy(e, 'support@navdana.com')}
+                href="mailto:contact@navdana.com"
+                className={`underline transition-all duration-300 hover:text-[#8b5a3c] ${copiedLink === 'contact@navdana.com' ? 'text-green-600' : 'text-[#b48a78]'}`}
+                onClick={(e) => handleCopy(e, 'contact@navdana.com')}
               >
-                support@navdana.com
+                contact@navdana.com
               </a>
-              {copiedLink === 'support@navdana.com' && (
+              {copiedLink === 'contact@navdana.com' && (
                 <span className="ml-2 text-green-600 text-sm">Copied!</span>
               )}
             </div>

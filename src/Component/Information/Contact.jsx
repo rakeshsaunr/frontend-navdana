@@ -86,7 +86,7 @@ export default function Contact() {
             className="text-[#b48a78] underline cursor-pointer"
             onClick={() => handleCopy("support@taractara.com")}
           >
-            support@navdana.com
+            contact@navdana.com
           </span>
           {" "}or WhatsApp us at{" "}
           <span

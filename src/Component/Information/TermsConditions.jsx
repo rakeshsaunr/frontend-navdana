@@ -73,10 +73,10 @@ const terms = [
       <>
         Email:{" "}
         <a
-          href="mailto:support@navdana.com"
+          href="mailto:contact@navdana.com"
           className="text-[#b48a78] underline hover:text-[#8b5a3c]"
         >
-          support@navdana.com
+          contact@navdana.com
         </a>{" "}
         | Phone:{" "}
         <a

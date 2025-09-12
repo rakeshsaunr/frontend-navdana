@@ -50,7 +50,7 @@ export default function Footer1() {
             <p className="text-sm text-gray-300">
               Email:{" "}
               <a href="mailto:support@example.com" className="underline">
-                support@navdana.com
+                contact@navdana.com
               </a>
             </p>
             <p className="text-sm text-gray-300">
