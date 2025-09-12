@@ -12,7 +12,7 @@ export default function Collection() {
   useEffect(() => {
     const fetchCollections = async () => {
       try {
-        const response = await axios.get(" http://localhost:5000/api/v1/category");
+        const response = await axios.get(" https://navdana.com/api/v1/category");
         // Assuming API returns { categories: [...] }
         setCollections(Array.isArray(response.data.categories) ? response.data.categories : []);
       } catch (error) {
