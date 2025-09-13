@@ -22,8 +22,9 @@ export default function ProductDetails() {
   const [selectedColor, setSelectedColor] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isZoomed, setIsZoomed] = useState(false); // State for mobile tap-to-zoom
 
-  // New state for hover effect
+  // New state for desktop hover effect
   const [zoomStyle, setZoomStyle] = useState({});
   const [isHovering, setIsHovering] = useState(false);
 
@@ -106,7 +107,7 @@ export default function ProductDetails() {
     setCurrentSlide(idx);
   };
   
-  // Handlers for the zoom effect
+  // Handlers for the desktop zoom effect
   const handleMouseMove = (e) => {
     if (!e.currentTarget) return;
     const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
@@ -126,6 +127,10 @@ export default function ProductDetails() {
     setIsHovering(false);
   };
 
+  const handleTapToZoom = () => {
+    setIsZoomed(!isZoomed);
+  };
+
   return (
     <div className="p-4 sm:p-6 md:p-8 max-w-full md:max-w-6xl mx-auto bg-white rounded-xl shadow-md">
       <div className="flex flex-col md:grid md:grid-cols-2 gap-6 md:gap-10">
@@ -134,25 +139,20 @@ export default function ProductDetails() {
           {/* Mobile Slider */}
           <div className="block sm:hidden w-full relative">
             {product.images && product.images.length > 0 && (
-              <div className="relative w-full flex flex-col items-center">
-                <img
-                  src={product.images[currentSlide]?.url || product.images[currentSlide]?.img}
-                  alt={product.images[currentSlide]?.alt || `${product.name}-${currentSlide}`}
-                  className="rounded-xl shadow-lg object-cover w-full max-h-[400px]"
-                />
-                {product.images.length > 1 && (
-                  <div className="flex justify-center items-center gap-4 mt-2">
-                    <button onClick={handlePrev}>
-                      <MdArrowBackIos size={18} />
-                    </button>
-                    <span className="text-base font-medium text-gray-700">
-                      {currentSlide + 1} / {product.images.length}
-                    </span>
-                    <button onClick={handleNext} style={{ transform: "scaleX(-1)" }}>
-                      <MdArrowBackIos size={18} />
-                    </button>
+              <div className="relative w-full overflow-x-scroll flex snap-x snap-mandatory">
+                {product.images.map((img, idx) => (
+                  <div 
+                    key={idx} 
+                    className="flex-shrink-0 w-full h-[400px] snap-center"
+                    onClick={handleTapToZoom}
+                  >
+                    <img
+                      src={img.url || img.img}
+                      alt={img.alt || `${product.name}-${idx}`}
+                      className={`w-full h-full object-contain transition-transform duration-300 ${isZoomed ? 'scale-150' : ''}`}
+                    />
                   </div>
-                )}
+                ))}
               </div>
             )}
           </div>
