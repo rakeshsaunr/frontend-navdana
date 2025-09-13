@@ -50,7 +50,7 @@ import Orders from "./Component/pages/dashboard/Orders";
 
 
 // Order page
-import MyOrders from "./pages/Myorders";
+import MyOrders from "./pages/MyOrders";
 
 
 // 🔹 ProtectedRoute Component
