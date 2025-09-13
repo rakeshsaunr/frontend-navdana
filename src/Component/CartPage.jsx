@@ -2,6 +2,18 @@ import React, { useState } from "react";
 import { useCart } from "../context/CartContext";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import {
+  XCircle,
+  PlusCircle,
+  MinusCircle,
+  ShoppingCart,
+  CheckCircle,
+  Truck,
+  MapPin,
+  CreditCard,
+  FileText,
+  Loader2,
+} from "lucide-react";
 
 export default function CartPage() {
   const { cart, addToCart, removeFromCart, clearCart } = useCart();
@@ -33,12 +45,13 @@ export default function CartPage() {
 
   // --- Cart handlers ---
   const handleIncrement = (item) => {
-    if (item.quantity < (item.stock || 1)) {
-      addToCart(item, 1);
-    } else {
-      alert("No more stock available for this variant!");
-    }
-  };
+  if (item.quantity < (item.stock || 1)) {
+    // Correctly call addToCart to increase quantity by 1
+    addToCart(item, 1);
+  } else {
+    alert("No more stock available for this variant!");
+  }
+};
 
   const handleDecrement = (item) => {
     removeFromCart(item._id, item.size, item.color, item.sku);
@@ -77,7 +90,7 @@ export default function CartPage() {
         return;
       }
       setLoading(true);
-      await axios.post("https://navdana.com/api/v1/user/send-otp", { email });
+      await axios.post("http://localhost:5000/api/v1/user/send-otp", { email });
       setLoading(false);
       setShowEmailPopup(false);
       setShowOtpPopup(true);
@@ -96,7 +109,7 @@ export default function CartPage() {
       setLoading(true);
 
       const res = await axios.post(
-        "https://navdana.com/api/v1/user/verify",
+        "http://localhost:5000/api/v1/user/verify",
         { name, email, otp, token: token || null },
         {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -147,14 +160,14 @@ export default function CartPage() {
       };
 
       const orderRes = await axios.post(
-        "https://navdana.com/api/v1/order",
+        "http://localhost:5000/api/v1/order",
         createOrderPayload,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      console.log("Order Reapose is:",orderRes)
+      console.log("Order Response is:", orderRes);
 
       // Backend must return: { order, razorpayOrder, key }
       const { order, razorpayOrder, key } = orderRes.data;
@@ -191,7 +204,7 @@ export default function CartPage() {
             setLoading(true);
             // 4) Verify payment on backend
             const verifyRes = await axios.post(
-              "https://navdana.com/api/v1/order/verify",
+              "http://localhost:5000/api/v1/order/verify",
               {
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_order_id: response.razorpay_order_id,
@@ -256,12 +269,15 @@ export default function CartPage() {
   // --- Empty cart UI ---
   if (cart.length === 0)
     return (
-      <div className="p-10 text-center">
-        <h2 className="text-3xl font-bold mb-4">Your Cart is Empty</h2>
-        <p className="mb-4 text-gray-600">Looks like you haven’t added anything yet.</p>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] bg-gray-50 p-6">
+        <ShoppingCart className="w-24 h-24 text-gray-400 mb-6" />
+        <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-3">Your Cart is Empty</h2>
+        <p className="mb-6 text-gray-600 max-w-md text-center">
+          Looks like you haven’t added anything to your cart yet. Browse our products and find something you love!
+        </p>
         <Link
           to="/"
-          className="inline-block px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition"
+          className="inline-flex items-center px-8 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition-colors"
         >
           Start Shopping
         </Link>
@@ -269,96 +285,122 @@ export default function CartPage() {
     );
 
   return (
-    <div className="max-w-6xl mx-auto p-8">
-      <h2 className="text-4xl font-bold mb-8 text-center">Your Cart</h2>
+    <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
+      <h2 className="text-4xl sm:text-5xl font-extrabold text-center text-gray-900 mb-10 tracking-tight">
+        <span className="bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">
+          Your Cart
+        </span>
+      </h2>
 
-      {/* Cart items */}
-      <div className="grid gap-6">
-        {cart.map((item, idx) => (
-          <div
-            key={`${item._id}-${item.size}-${item.color}-${item.sku}-${idx}`}
-            className="flex flex-col md:flex-row items-center md:justify-between p-6 bg-white rounded-xl shadow-lg hover:shadow-2xl transition relative"
-          >
-            <img
-              src={item.image}
-              alt={item.name}
-              className="w-32 h-32 md:w-40 md:h-40 object-cover rounded-lg border"
-            />
-            <div className="flex-1 md:ml-6 flex flex-col gap-2 mt-4 md:mt-0">
-              <h3 className="text-2xl font-semibold">{item.name}</h3>
-              <p className="text-gray-700 text-lg">₹{item.price}</p>
-              <div className="text-gray-600">
-                {item.size && <p>Size: {item.size}</p>}
-                {item.color && <p>Color: {item.color}</p>}
-                {item.sku && <p className="text-xs text-gray-500">SKU: {item.sku}</p>}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Cart Items Section */}
+        <div className="lg:col-span-2 space-y-6">
+          {cart.map((item, idx) => (
+            <div
+              key={`${item._id}-${item.size}-${item.color}-${item.sku}-${idx}`}
+              className="flex flex-col sm:flex-row items-center p-6 bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300"
+            >
+              <img
+                src={item.image}
+                alt={item.name}
+                className="w-28 h-28 sm:w-32 sm:h-32 object-cover rounded-lg border border-gray-200"
+              />
+              <div className="flex-1 sm:ml-6 flex flex-col justify-center mt-4 sm:mt-0">
+                <div className="flex justify-between items-start w-full">
+                  <div>
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900">{item.name}</h3>
+                    <p className="text-gray-600 mt-1">₹{item.price.toFixed(2)}</p>
+                    <div className="text-sm text-gray-500 mt-2 space-y-1">
+                      {item.size && <p>Size: {item.size}</p>}
+                      {item.color && <p>Color: {item.color}</p>}
+                      {item.sku && <p>SKU: {item.sku}</p>}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleRemove(item)}
+                    className="text-red-500 hover:text-red-700 transition-colors"
+                    aria-label="Remove item"
+                  >
+                    <XCircle size={24} />
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-4 mt-4">
+                  <button
+                    onClick={() => handleDecrement(item)}
+                    className="p-1 text-gray-600 hover:text-gray-800 transition"
+                  >
+                    <MinusCircle size={24} />
+                  </button>
+                  <span className="px-3 py-1 border border-gray-300 rounded-md font-medium text-gray-800">
+                    {item.quantity}
+                  </span>
+                  <button
+                    onClick={() => handleIncrement(item)}
+                    className="p-1 text-gray-600 hover:text-gray-800 transition"
+                  >
+                    <PlusCircle size={24} />
+                  </button>
+                </div>
               </div>
-
-              <div className="flex items-center gap-4 mt-2">
-                <button
-                  onClick={() => handleDecrement(item)}
-                  className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 transition font-bold"
-                >
-                  -
-                </button>
-                <span className="px-3 py-1 border rounded text-lg font-medium">
-                  {item.quantity}
-                </span>
-                <button
-                  onClick={() => handleIncrement(item)}
-                  className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 transition font-bold"
-                >
-                  +
-                </button>
+              <div className="mt-4 sm:mt-0 sm:ml-auto text-xl font-bold text-gray-900">
+                ₹{(item.price * item.quantity).toFixed(2)}
               </div>
+            </div>
+          ))}
+        </div>
 
-              <button
-                onClick={() => handleRemove(item)}
-                className="mt-3 text-red-600 font-semibold hover:underline"
-              >
-                Remove
-              </button>
-            </div>
-            <div className="mt-4 md:mt-0 text-xl font-bold text-gray-900">
-              ₹{item.price * item.quantity}
-            </div>
+        {/* Order Summary Section */}
+        <div className="lg:col-span-1 p-6 bg-white rounded-xl shadow-lg border border-gray-200 h-fit sticky top-4">
+          <h3 className="text-2xl font-bold text-gray-900 mb-6">Order Summary</h3>
+          <div className="flex justify-between items-center mb-4 text-lg">
+            <span className="text-gray-700">Subtotal ({cart.length} items):</span>
+            <span className="font-semibold text-gray-900">₹{totalPrice.toFixed(2)}</span>
           </div>
-        ))}
-      </div>
-
-      {/* Cart total */}
-      <div className="mt-10 p-6 bg-gray-100 rounded-xl flex flex-col md:flex-row justify-between items-center shadow-inner">
-        <h3 className="text-2xl font-bold">Total:</h3>
-        <p className="text-3xl font-extrabold text-black mt-3 md:mt-0">₹{totalPrice}</p>
-        <button
-          onClick={startCheckout}
-          className="mt-4 md:mt-0 px-8 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition font-semibold"
-        >
-          Proceed to Checkout
-        </button>
+          <div className="flex justify-between items-center mb-6 pb-6 border-b border-gray-200 text-lg">
+            <span className="text-gray-700">Shipping:</span>
+            <span className="font-semibold text-gray-900">FREE</span>
+          </div>
+          <div className="flex justify-between items-center text-2xl font-bold mb-6">
+            <span className="text-gray-900">Total:</span>
+            <span className="text-indigo-600">₹{totalPrice.toFixed(2)}</span>
+          </div>
+          <button
+            onClick={startCheckout}
+            className="w-full px-8 py-4 bg-indigo-600 text-white font-semibold text-lg rounded-lg shadow-md hover:bg-indigo-700 transition-colors disabled:bg-gray-400"
+            disabled={loading}
+          >
+            {loading ? (
+              <Loader2 className="animate-spin h-6 w-6 mx-auto" />
+            ) : (
+              "Proceed to Checkout"
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Popups (Name → Email → OTP → Checkout) */}
       {showNamePopup && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
-            <h2 className="text-xl font-bold mb-4">Enter Your Name</h2>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-sm w-full p-6 shadow-2xl animate-fade-in">
+            <h2 className="text-2xl font-bold mb-4 text-gray-900">Enter Your Name</h2>
             <input
               type="text"
               placeholder="Full Name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="border px-3 py-2 rounded w-full"
+              className="border border-gray-300 px-4 py-2 rounded-lg w-full focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
             />
-            <div className="flex justify-end gap-4 mt-4">
+            <div className="flex justify-end gap-3 mt-4">
               <button
                 onClick={() => setShowNamePopup(false)}
-                className="px-4 py-2 bg-gray-300 rounded"
+                className="px-5 py-2 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={nextToEmail}
-                className="px-4 py-2 bg-black text-white rounded"
+                className="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
               >
                 Next
               </button>
@@ -368,28 +410,32 @@ export default function CartPage() {
       )}
 
       {showEmailPopup && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
-            <h2 className="text-xl font-bold mb-4">Enter Your Email</h2>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-sm w-full p-6 shadow-2xl animate-fade-in">
+            <h2 className="text-2xl font-bold mb-4 text-gray-900">Enter Your Email</h2>
             <input
               type="email"
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="border px-3 py-2 rounded w-full"
+              className="border border-gray-300 px-4 py-2 rounded-lg w-full focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
             />
-            <div className="flex justify-end gap-4 mt-4">
+            <div className="flex justify-end gap-3 mt-4">
               <button
                 onClick={() => setShowEmailPopup(false)}
-                className="px-4 py-2 bg-gray-300 rounded"
+                className="px-5 py-2 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={sendOtp}
-                className="px-4 py-2 bg-black text-white rounded"
+                className="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
               >
-                {loading ? "Sending..." : "Send OTP"}
+                {loading ? (
+                  <Loader2 className="animate-spin h-5 w-5" />
+                ) : (
+                  "Send OTP"
+                )}
               </button>
             </div>
           </div>
@@ -397,28 +443,32 @@ export default function CartPage() {
       )}
 
       {showOtpPopup && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
-            <h2 className="text-xl font-bold mb-4">Enter OTP</h2>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-sm w-full p-6 shadow-2xl animate-fade-in">
+            <h2 className="text-2xl font-bold mb-4 text-gray-900">Enter OTP</h2>
             <input
               type="text"
               placeholder="OTP"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
-              className="border px-3 py-2 rounded w-full"
+              className="border border-gray-300 px-4 py-2 rounded-lg w-full text-center tracking-widest text-lg font-mono focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
             />
-            <div className="flex justify-end gap-4 mt-4">
+            <div className="flex justify-end gap-3 mt-4">
               <button
                 onClick={() => setShowOtpPopup(false)}
-                className="px-4 py-2 bg-gray-300 rounded"
+                className="px-5 py-2 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={verifyOtp}
-                className="px-4 py-2 bg-black text-white rounded"
+                className="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
               >
-                {loading ? "Verifying..." : "Verify OTP"}
+                {loading ? (
+                  <Loader2 className="animate-spin h-5 w-5" />
+                ) : (
+                  "Verify & Continue"
+                )}
               </button>
             </div>
           </div>
@@ -426,10 +476,11 @@ export default function CartPage() {
       )}
 
       {showCheckout && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl max-w-lg w-full p-8 relative">
-            <h2 className="text-2xl font-bold mb-6">Shipping Details</h2>
-
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-lg w-full p-8 relative shadow-2xl animate-fade-in">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900 flex items-center gap-2">
+              <Truck size={24} /> Shipping Details
+            </h2>
             <form className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
               <input
                 type="text"
@@ -437,7 +488,7 @@ export default function CartPage() {
                 name="fullName"
                 value={shippingInfo.fullName}
                 onChange={handleChange}
-                className="border px-3 py-2 rounded w-full"
+                className="border border-gray-300 px-4 py-2 rounded-lg w-full focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
                 required
               />
               <input
@@ -446,7 +497,7 @@ export default function CartPage() {
                 name="address"
                 value={shippingInfo.address}
                 onChange={handleChange}
-                className="border px-3 py-2 rounded w-full"
+                className="border border-gray-300 px-4 py-2 rounded-lg w-full focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
                 required
               />
               <input
@@ -455,7 +506,7 @@ export default function CartPage() {
                 name="city"
                 value={shippingInfo.city}
                 onChange={handleChange}
-                className="border px-3 py-2 rounded w-full"
+                className="border border-gray-300 px-4 py-2 rounded-lg w-full focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
                 required
               />
               <input
@@ -464,7 +515,7 @@ export default function CartPage() {
                 name="postalCode"
                 value={shippingInfo.postalCode}
                 onChange={handleChange}
-                className="border px-3 py-2 rounded w-full"
+                className="border border-gray-300 px-4 py-2 rounded-lg w-full focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
                 required
               />
               <input
@@ -473,7 +524,7 @@ export default function CartPage() {
                 name="country"
                 value={shippingInfo.country}
                 onChange={handleChange}
-                className="border px-3 py-2 rounded w-full"
+                className="border border-gray-300 px-4 py-2 rounded-lg w-full focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
                 required
               />
               <input
@@ -482,24 +533,28 @@ export default function CartPage() {
                 name="phone"
                 value={shippingInfo.phone}
                 onChange={handleChange}
-                className="border px-3 py-2 rounded w-full"
+                className="border border-gray-300 px-4 py-2 rounded-lg w-full focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
               />
 
               <div className="flex justify-between mt-6">
                 <button
                   type="button"
                   onClick={() => setShowCheckout(false)}
-                  className="px-6 py-2 bg-gray-300 rounded hover:bg-gray-400 transition"
+                  className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={handleCheckout}
-                  className="px-6 py-2 bg-black text-white rounded hover:bg-gray-800 transition"
+                  className="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors disabled:bg-gray-400"
                   disabled={loading}
                 >
-                  {loading ? "Processing..." : "Pay Now"}
+                  {loading ? (
+                    <Loader2 className="animate-spin h-5 w-5 mx-auto" />
+                  ) : (
+                    `Pay ₹${totalPrice.toFixed(2)}`
+                  )}
                 </button>
               </div>
             </form>

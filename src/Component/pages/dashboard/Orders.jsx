@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 
-const API_URL = "https://navdana.com/api/v1/order";
+const API_URL = "http://localhost:5000/api/v1/order";
 
 const currency = (num) =>
   num == null ? "—" : new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(num);

@@ -48,6 +48,11 @@ import Banners from "./Component/pages/dashboard/Banners";
 import Users from "./Component/pages/dashboard/Users";
 import Orders from "./Component/pages/dashboard/Orders";
 
+
+// Order page
+import MyOrders from "./pages/Myorders";
+
+
 // 🔹 ProtectedRoute Component
 function ProtectedRoute({ element, role }) {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -125,6 +130,10 @@ function App() {
 
               {/* Catch-all */}
               <Route path="*" element={<ComingSoon />} />
+
+              {/* Order Page  */}
+              <Route path='/my-orders' element={<MyOrders />} />
+
             </Routes>
           </main>
           <Footer2 />
