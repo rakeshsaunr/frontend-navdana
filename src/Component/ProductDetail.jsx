@@ -23,6 +23,10 @@ export default function ProductDetails() {
   const [quantity, setQuantity] = useState(1);
   const [currentSlide, setCurrentSlide] = useState(0);
 
+  // New state for hover effect
+  const [zoomStyle, setZoomStyle] = useState({});
+  const [isHovering, setIsHovering] = useState(false);
+
   const { addToCart } = useCart();
 
   useEffect(() => {
@@ -101,6 +105,26 @@ export default function ProductDetails() {
     setSelectedImage(imgSrc);
     setCurrentSlide(idx);
   };
+  
+  // Handlers for the zoom effect
+  const handleMouseMove = (e) => {
+    if (!e.currentTarget) return;
+    const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - left) / width) * 100;
+    const y = ((e.clientY - top) / height) * 100;
+    
+    // Set the transform origin to the mouse position
+    setZoomStyle({
+      transform: 'scale(2)',
+      transformOrigin: `${x}% ${y}%`
+    });
+    setIsHovering(true);
+  };
+
+  const handleMouseLeave = () => {
+    setZoomStyle({}); // Reset style
+    setIsHovering(false);
+  };
 
   return (
     <div className="p-4 sm:p-6 md:p-8 max-w-full md:max-w-6xl mx-auto bg-white rounded-xl shadow-md">
@@ -151,12 +175,17 @@ export default function ProductDetails() {
             })}
           </div>
 
-          {/* Main Image */}
-          <div className="hidden sm:flex flex-1 items-center justify-center">
+          {/* Main Image with Zoom Effect */}
+          <div 
+            className="hidden sm:flex flex-1 items-center justify-center overflow-hidden relative"
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+          >
             <img
               src={selectedImage}
               alt={product.name}
-              className="w-full max-w-[400px] h-[500px] rounded-xl shadow-lg object-cover"
+              className={`w-full max-w-[400px] h-[500px] rounded-xl shadow-lg object-cover cursor-crosshair transition-transform duration-200 ease-out`}
+              style={zoomStyle}
             />
           </div>
         </div>
