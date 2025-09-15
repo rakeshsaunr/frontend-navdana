@@ -5,8 +5,9 @@ import "swiper/css/autoplay";
 // import { Autoplay } from "swiper";
 
 // Use public folder paths directly
-const offer1 = "/Images/model1.png";
-const offer2 = "/Images/model3.png";
+const offer1 = "/Images/model1.PNG";
+const offer2 = "/Images/model2.png";
+const offer3 = "/Images/model3.png"
 
 export default function OfferZone() {
   return (
@@ -23,7 +24,10 @@ export default function OfferZone() {
         speed={1000}
       >
         <SwiperSlide>
-          <img src={offer1} alt="Offer 1" className="w-full h-full object-cover" />
+          <img src={offer3} alt="Offer 1" className="w-full h-full object-cover" />
+        </SwiperSlide>
+        <SwiperSlide>
+          <img src={offer1} alt="Offer 2" className="w-full h-full object-cover" />
         </SwiperSlide>
         <SwiperSlide>
           <img src={offer2} alt="Offer 2" className="w-full h-full object-cover" />

@@ -33,7 +33,7 @@ const MyOrders = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/v1/order/user-orders", {
+        const res = await axios.get("https://navdana.com/api/v1/order/user-orders", {
           headers: { Authorization: `Bearer ${token}` },
           withCredentials: true,
         });
