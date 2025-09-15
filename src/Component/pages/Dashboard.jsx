@@ -31,9 +31,9 @@ export default function Dashboard() {
       try {
         // Example API endpoints, replace with your actual endpoints
         const [statsRes, chartRes, ordersRes] = await Promise.all([
-          axios.get("https://myapp.loca.lt/api/v1/dashboard/stats"),
-          axios.get("https://myapp.loca.lt/api/v1/dashboard/user-growth"),
-          axios.get("https://myapp.loca.lt/api/v1/order?limit=5&sort=-createdAt"),
+          axios.get("https://navdana.com/api/v1/dashboard/stats"),
+          axios.get("https://navdana.com/api/v1/dashboard/user-growth"),
+          axios.get("https://navdana.com/api/v1/order?limit=5&sort=-createdAt"),
         ]);
         setStats({
           totalUsers: statsRes.data?.totalUsers ?? 0,
