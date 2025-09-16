@@ -29,7 +29,7 @@ const Footer = () => {
     useEffect(() => {
         const fetchCategories = async () => {
             try {
-                const res = await axios.get("https://navdana.com/api/v1/category");
+                const res = await axios.get("http://192.168.1.11:5000/api/v1/category");
                 if (Array.isArray(res.data.categories)) {
                     const activeCategories = res.data.categories.filter(
                         (cat) => cat.isActive && cat.name !== "All Products"

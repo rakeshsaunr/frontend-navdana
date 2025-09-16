@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import 'react-lazy-load-image-component/src/effects/blur.css';
@@ -9,11 +9,14 @@ export default function Collection() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [slidesToShow, setSlidesToShow] = useState(2);
 
+  // For touch slider
+  const touchStartX = useRef(null);
+  const touchEndX = useRef(null);
+
   useEffect(() => {
     const fetchCollections = async () => {
       try {
-        const response = await axios.get(" https://navdana.com/api/v1/category");
-        // Assuming API returns { categories: [...] }
+        const response = await axios.get("https://navdana.com/api/v1/category");
         setCollections(Array.isArray(response.data.categories) ? response.data.categories : []);
       } catch (error) {
         console.error("Error fetching collections:", error);
@@ -22,7 +25,6 @@ export default function Collection() {
     fetchCollections();
   }, []);
 
-  // Dynamically set slidesToShow based on screen width
   useEffect(() => {
     function updateSlidesToShow() {
       if (window.innerWidth < 400) {
@@ -38,14 +40,12 @@ export default function Collection() {
     return () => window.removeEventListener("resize", updateSlidesToShow);
   }, []);
 
-  // Only show collections except "All Products" and where isActive is true
   const filteredCollections = collections.filter(
     (item) => item.name !== "All Products" && item.isActive
   );
 
   const totalSlides = filteredCollections.length;
 
-  // Get visible collections for the current slide (dynamic for mobile)
   const getVisibleCollections = () => {
     if (totalSlides <= slidesToShow) {
       return filteredCollections;
@@ -57,17 +57,28 @@ export default function Collection() {
     return visible;
   };
 
-  // Calculate the correct counter caption for the slider
   const getCounterCaption = () => {
     if (totalSlides <= slidesToShow) {
-      return `1/1`;
+      return `•`;
     }
-    let start = currentSlide + 1;
-    let end = currentSlide + slidesToShow;
-    if (end > totalSlides) {
-      end = end - totalSlides;
+    let dots = [];
+    for (let i = 0; i < Math.ceil(totalSlides / slidesToShow); i++) {
+      dots.push(
+        <span
+          key={i}
+          style={{
+            display: "inline-block",
+            width: 8,
+            height: 8,
+            borderRadius: "50%",
+            margin: "0 3px",
+            background: i === Math.floor(currentSlide / slidesToShow) ? "#ec4899" : "#d1d5db",
+            transition: "background 0.2s"
+          }}
+        />
+      );
     }
-    return `${start}/${end}`;
+    return <span>{dots}</span>;
   };
 
   const handlePrev = () => {
@@ -86,6 +97,34 @@ export default function Collection() {
     );
   };
 
+  // Touch slider handlers
+  const handleTouchStart = (e) => {
+    const touch = e.touches[0];
+    touchStartX.current = touch.clientX;
+    touchEndX.current = null;
+  };
+
+  const handleTouchMove = (e) => {
+    const touch = e.touches[0];
+    touchEndX.current = touch.clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartX.current === null || touchEndX.current === null) return;
+    const distance = touchStartX.current - touchEndX.current;
+    if (Math.abs(distance) > 40) {
+      if (distance > 0) {
+        // Swiped left
+        handleNext();
+      } else {
+        // Swiped right
+        handlePrev();
+      }
+    }
+    touchStartX.current = null;
+    touchEndX.current = null;
+  };
+
   return (
     <section className="py-17 bg-white">
       <h2 className="text-3xl font-medium text-center mb-13">
@@ -96,11 +135,17 @@ export default function Collection() {
         <p className="text-center text-gray-500">No collections available.</p>
       ) : (
         <>
-          {/* Mobile: Custom round slider with minimal gap */}
+          {/* Mobile: Custom round slider with minimal gap and touch support */}
           <div className="block sm:hidden w-full relative">
             {totalSlides > 0 && (
               <div className="flex flex-col items-center">
-                <div className="relative w-full flex flex-col items-center justify-center">
+                <div
+                  className="relative w-full flex flex-col items-center justify-center"
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                  style={{ touchAction: "pan-y" }}
+                >
                   <div
                     className="flex flex-row justify-center w-full transition-all"
                     style={{
@@ -137,7 +182,7 @@ export default function Collection() {
                       </Link>
                     ))}
                   </div>
-                  {/* Slider counter and buttons at the bottom */}
+                  {/* Slider dots and buttons at the bottom */}
                   <div className="w-full flex flex-col items-center mt-4">
                     <div className="flex flex-row items-center justify-center gap-2">
                       <button
