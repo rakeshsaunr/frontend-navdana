@@ -1,128 +1,247 @@
-import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import 'react-lazy-load-image-component/src/effects/blur.css';
 
-// Helper function to capitalize all letters
-function toAllCaps(str) {
-  if (!str) return "";
-  return str.toUpperCase();
-}
+export default function Collection() {
+  const [collections, setCollections] = useState([]);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [slidesToShow, setSlidesToShow] = useState(2);
 
-export default function CollectionPage() {
-  const { id } = useParams();
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [categoryName, setCategoryName] = useState("");
-
-  const API_PRODUCT = ` https://navdana.com/api/v1/product/category/${id}`;
+  // For touch slider
+  const touchStartX = useRef(null);
+  const touchEndX = useRef(null);
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchCollections = async () => {
       try {
-        const res = await axios.get(API_PRODUCT);
-        let productList = [];
-        if (Array.isArray(res.data)) productList = res.data;
-        else if (Array.isArray(res.data.products)) productList = res.data.products;
-        else if (Array.isArray(res.data.data)) productList = res.data.data;
-        setProducts(productList);
-
-        // Try to get category name from the first product, fallback to id
-        if (productList.length > 0) {
-          setCategoryName(productList[0].category?.name || productList[0].category || id);
-        } else {
-          setCategoryName(id);
-        }
+        const response = await axios.get(" https://navdana.com/api/v1/category");
+        setCollections(Array.isArray(response.data.categories) ? response.data.categories : []);
       } catch (error) {
-        console.error(error);
-        setProducts([]);
-        setCategoryName(id);
-      } finally {
-        setLoading(false);
+        console.error("Error fetching collections:", error);
       }
     };
-    fetchProducts();
-  }, [id]);
+    fetchCollections();
+  }, []);
 
-  if (loading) {
-    return <p className="text-center py-10">Loading products...</p>;
-  }
+  useEffect(() => {
+    function updateSlidesToShow() {
+      if (window.innerWidth < 400) {
+        setSlidesToShow(2);
+      } else if (window.innerWidth < 640) {
+        setSlidesToShow(3);
+      } else {
+        setSlidesToShow(4);
+      }
+    }
+    updateSlidesToShow();
+    window.addEventListener("resize", updateSlidesToShow);
+    return () => window.removeEventListener("resize", updateSlidesToShow);
+  }, []);
 
-  if (!products.length) {
-    return <p className="text-center py-10">No products found.</p>;
-  }
+  const filteredCollections = collections.filter(
+    (item) => item.name !== "All Products" && item.isActive
+  );
+
+  const totalSlides = filteredCollections.length;
+
+  const getVisibleCollections = () => {
+    if (totalSlides <= slidesToShow) {
+      return filteredCollections;
+    }
+    let visible = [];
+    for (let i = 0; i < slidesToShow; i++) {
+      visible.push(filteredCollections[(currentSlide + i) % totalSlides]);
+    }
+    return visible;
+  };
+
+  const getCounterCaption = () => {
+    if (totalSlides <= slidesToShow) {
+      return `•`;
+    }
+    let dots = [];
+    for (let i = 0; i < Math.ceil(totalSlides / slidesToShow); i++) {
+      dots.push(
+        <span
+          key={i}
+          style={{
+            display: "inline-block",
+            width: 8,
+            height: 8,
+            borderRadius: "50%",
+            margin: "0 3px",
+            background: i === Math.floor(currentSlide / slidesToShow) ? "#ec4899" : "#d1d5db",
+            transition: "background 0.2s"
+          }}
+        />
+      );
+    }
+    return <span>{dots}</span>;
+  };
+
+  const handlePrev = () => {
+    if (totalSlides <= slidesToShow) return;
+    setCurrentSlide((prev) =>
+      prev === 0
+        ? (totalSlides - slidesToShow < 0 ? 0 : totalSlides - slidesToShow)
+        : prev - 1
+    );
+  };
+
+  const handleNext = () => {
+    if (totalSlides <= slidesToShow) return;
+    setCurrentSlide((prev) =>
+      (prev + 1) % totalSlides
+    );
+  };
+
+  // Touch slider handlers
+  const handleTouchStart = (e) => {
+    const touch = e.touches[0];
+    touchStartX.current = touch.clientX;
+    touchEndX.current = null;
+  };
+
+  const handleTouchMove = (e) => {
+    const touch = e.touches[0];
+    touchEndX.current = touch.clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartX.current === null || touchEndX.current === null) return;
+    const distance = touchStartX.current - touchEndX.current;
+    if (Math.abs(distance) > 40) {
+      if (distance > 0) {
+        // Swiped left
+        handleNext();
+      } else {
+        // Swiped right
+        handlePrev();
+      }
+    }
+    touchStartX.current = null;
+    touchEndX.current = null;
+  };
 
   return (
-    <section className="px-6 py-10 bg-white">
-      <div className="container mx-auto">
-        {/* Breadcrumb */}
-        <div className="mb-8">
-          <nav className="flex items-center space-x-2 text-base">
-            <Link to="/" className="text-gray-400 hover:text-gray-600">Home</Link>
-            <span className="text-gray-400">/</span>
-            <span className="text-[#42515A] font-medium">
-              {toAllCaps(categoryName.replace(/-/g, " "))}
-            </span>
-          </nav>
-        </div>
+    <section className="py-17 bg-white">
+      <h2 className="text-3xl font-medium text-center mb-13">
+        SHOP BY COLLECTION
+      </h2>
 
-        {/* Heading */}
-        <h2 className="text-3xl font-medium text-center mb-13">
-          {categoryName
-            ? toAllCaps(categoryName.replace(/-/g, " "))
-            : "PRODUCTS"}
-        </h2>
-
-        {/* Product Grid */}
-        <div className="max-w-8xl mx-auto grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {products.map((product) => (
-            <div key={product._id} className="group bg-white rounded-lg shadow hover:shadow-lg transition flex flex-col">
-              
-              {/* Image Container → Entire image clickable */}
-              <Link
-                to={`/product/${product._id}`} 
-                className="relative w-full aspect-[3/4] overflow-hidden rounded-lg block"
-              >
-                <LazyLoadImage
-                  src={product.images?.[0]?.url}
-                  alt={product.images?.[0]?.alt || product.name}
-                  effect="blur"
-                  width="100%"
-                  height="auto"
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  lazy="loading"
-                />
-
-                {/* Bottom Left: Price */}
-                <div className="absolute bottom-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded font-semibold transition-opacity duration-300 group-hover:opacity-0">
-                  ₹{product.price}
-                </div>
-
-                {/* Bottom Right: Add to Bag */}
-                <div className="absolute bottom-2 right-2 bg-white text-gray-800 p-1 rounded-full shadow transition-opacity duration-300 group-hover:opacity-0">
-                  {/* You can add an icon here if needed */}
-                </div>
-
-                {/* Hover Quick View */}
-                <div className="absolute bottom-2 left-2 right-2 bg-[#2C4A52] text-white text-center py-3 opacity-0 group-hover:opacity-100 transition rounded-[8px]">
-                  Quick view
-                </div>
-              </Link>
-
-              {/* Description and Price */}
-              <div className="pt-2 px-2 pb-3 flex-1 flex flex-col justify-between">
-                <h3 className="text-sm font-medium text-gray-800 mb-1 truncate">
-                  {toAllCaps(product.name)}
-                </h3>
-                <div className="text-sm font-semibold text-pink-600">
-                  ₹{product.price}
+      {filteredCollections.length === 0 ? (
+        <p className="text-center text-gray-500">No collections available.</p>
+      ) : (
+        <>
+          {/* Mobile: Custom round slider with minimal gap and touch support */}
+          <div className="block sm:hidden w-full relative">
+            {totalSlides > 0 && (
+              <div className="flex flex-col items-center">
+                <div
+                  className="relative w-full flex flex-col items-center justify-center"
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                  style={{ touchAction: "pan-y" }}
+                >
+                  <div
+                    className="flex flex-row justify-center w-full transition-all"
+                    style={{
+                      minHeight: "200px",
+                      gap: "12px",
+                    }}
+                  >
+                    {getVisibleCollections().map((item, idx) => (
+                      <Link
+                        to={`/collection-pages/${item._id}`}
+                        key={item._id || item.name || idx}
+                        className="full-unstyled-link::after"
+                        style={{ minWidth: 0 }}
+                      >
+                        <div className="flex flex-col items-center">
+                          <LazyLoadImage
+                            effect="blur"
+                            src={item.image}
+                            alt={item.name}
+                            loading="lazy"
+                            className="w-32 h-32 object-cover rounded-full border border-gray-200 shadow"
+                            style={{
+                              aspectRatio: "1/1",
+                              objectFit: "cover",
+                              background: "#fff"
+                            }}
+                          />
+                        </div>
+                        <div className="flex flex-row items-center justify-center mt-2">
+                          <p className="text-gray-800 font-medium text-base text-center">
+                            {item.name}
+                          </p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                  {/* Slider dots and buttons at the bottom */}
+                  <div className="w-full flex flex-col items-center mt-4">
+                    <div className="flex flex-row items-center justify-center gap-2">
+                      <button
+                        onClick={handlePrev}
+                        className="bg-white transition disabled:opacity-50"
+                        aria-label="Previous"
+                        disabled={totalSlides <= slidesToShow}
+                        style={{ minWidth: 32, minHeight: 32 }}
+                      >
+                        <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
+                      <span className="text-base font-medium text-gray-700 select-none" style={{ minWidth: 32, textAlign: "center" }}>
+                        {getCounterCaption()}
+                      </span>
+                      <button
+                        onClick={handleNext}
+                        className="bg-white transition disabled:opacity-50"
+                        aria-label="Next"
+                        disabled={totalSlides <= slidesToShow}
+                        style={{ minWidth: 32, minHeight: 32 }}
+                      >
+                        <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </div>
+            )}
+          </div>
+
+          {/* Desktop Grid */}
+          <div className="hidden sm:flex flex-wrap justify-center gap-6 px-4">
+            {filteredCollections.map((item, index) => (
+              <Link
+                to={`/collection-pages/${item._id}`}
+                key={item._id || item.name || index}
+                className="full-unstyled-link::after"
+              >
+                <div className="flex flex-col items-center">
+                  <LazyLoadImage
+                    src={item.image}
+                    alt={item.name}
+                    effect="blur"
+                    loading="lazy"
+                    className="w-48 h-48 object-cover rounded-full"
+                  />
+                </div>
+                <p className="mt-2 text-gray-800 font-medium flex items-center justify-center text-center">
+                  {item.name}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </>
+      )}
     </section>
   );
 }

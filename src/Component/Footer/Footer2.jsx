@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
+import axios from "axios";
 import { BsFillThreadsFill } from "react-icons/bs";
 import { FaSquareInstagram } from "react-icons/fa6";
 
@@ -18,6 +19,36 @@ const Footer = () => {
     const [email, setEmail] = useState('');
     const [status, setStatus] = useState('idle'); // idle | loading | success | error
     const [errorMsg, setErrorMsg] = useState('');
+
+    // Categories state
+    const [categories, setCategories] = useState([]);
+    const [loadingCategories, setLoadingCategories] = useState(true);
+    const [catError, setCatError] = useState('');
+
+    // ✅ Fetch categories from backend
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const res = await axios.get("https://navdana.com/api/v1/category");
+                if (Array.isArray(res.data.categories)) {
+                    const activeCategories = res.data.categories.filter(
+                        (cat) => cat.isActive && cat.name !== "All Products"
+                    );
+                    const finalCategories = [
+                        { _id: "all-products", name: "All Products" },
+                        ...activeCategories,
+                    ];
+                    setCategories(finalCategories);
+                }
+            } catch (err) {
+                console.error("Error fetching footer categories:", err);
+                setCatError("Failed to load categories");
+            } finally {
+                setLoadingCategories(false);
+            }
+        };
+        fetchCategories();
+    }, []);
 
     // Simulate async newsletter subscription
     const handleNewsletter = async (e) => {
@@ -125,19 +156,35 @@ const Footer = () => {
                         {/* Divider */}
                         <div className="hidden lg:block footer-divider self-stretch" />
 
-                        {/* Section 1: Categories */}
-                        <div className="flex-1 flex flex-col items-center sm:items-center lg:items-start mb-8 lg:mb-0 px-0 lg:px-8 w-full">
-                            <h4 className="text-sm tracking-widest font-semibold mb-4 text-center lg:text-left">CATEGORIES</h4>
-                            <ul className="space-y-2 text-sm text-center sm:text-left">
-                                <li><Link to="/collections/suit" className="animated-list-item block">Suit Set</Link></li>
-                                <li><Link to="/collections/tie-dye" className="animated-list-item block">Tie Dye</Link></li>
-                                <li><Link to="/collections/luxe" className="animated-list-item block">Luxe</Link></li>
-                                <li><Link to="/collections/kurtas" className="animated-list-item block">Kurtas</Link></li>
-                                <li><Link to="/collections/co-ord-sets" className="animated-list-item block">Co-ord Sets</Link></li>
-                                <li><Link to="/collections/tunics" className="animated-list-item block">Tunics</Link></li>
-                                <li><Link to="/collections/best-sellers" className="animated-list-item block">Bestsellers</Link></li>
-                                <li><Link to="/collections/all-products" className="animated-list-item block">All Products</Link></li>
-                            </ul>
+                        {/* Categories */}
+                        <div className="flex-1">
+                            <h4 className="text-sm tracking-widest font-semibold mb-4 text-center lg:text-left">
+                                CATEGORIES
+                            </h4>
+                            {loadingCategories && (
+                                <p className="text-center text-gray-500 text-sm">Loading...</p>
+                            )}
+                            {catError && (
+                                <p className="text-center text-red-500 text-sm">{catError}</p>
+                            )}
+                            {!loadingCategories && !catError && (
+                                <ul className="space-y-2 text-sm text-center lg:text-left">
+                                    {categories.map((cat) => (
+                                        <li key={cat._id}>
+                                            <Link
+                                                to={
+                                                    cat._id === "all-products"
+                                                        ? "/all-products"
+                                                        : `/collection-pages/${cat._id}`
+                                                }
+                                                className="hover:text-pink-500 transition-colors"
+                                            >
+                                                {cat.name}
+                                            </Link>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
                         </div>
 
                         {/* Divider */}
@@ -148,7 +195,6 @@ const Footer = () => {
                             <h4 className="text-sm tracking-widest font-semibold mb-4 text-center lg:text-left">INFORMATION</h4>
                             <ul className="space-y-2 text-sm text-center sm:text-left">
                                 <li><Link to="/about" className="animated-list-item block">About Us</Link></li>
-                                <li><Link to="/blog" className="animated-list-item block">Blog</Link></li>
                                 <li><Link to="/terms-conditions" className="animated-list-item block">Terms & Conditions</Link></li>
                                 <li><Link to="/contact" className="animated-list-item block">Contact Us</Link></li>
                                 <li><Link to="/career" className="animated-list-item block">Careers</Link></li>
@@ -237,7 +283,7 @@ const Footer = () => {
                             <div className="flex flex-wrap items-center justify-center space-x-2 mb-2 md:mb-0">
                                 <span className="text-sm text-gray-700 mr-2">Follow us</span>
                                 <Link
-                                    to="https://facebook.com/"
+                                    to="https://facebook.com/navdana"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     aria-label="Facebook"
@@ -247,7 +293,7 @@ const Footer = () => {
                                     <Facebook className="h-6 w-6 text-[#1778F2] group-hover:text-[#1778F2]" />
                                 </Link>
                                 <Link
-                                    to="https://instagram.com/"
+                                    to="https://instagram.com/navdana"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     aria-label="Instagram"
@@ -257,7 +303,7 @@ const Footer = () => {
                                     <FaSquareInstagram className="h-6 w-6 text-pink-500 group-hover:text-pink-500" />
                                 </Link>
                                 <Link
-                                    to="https://threads.net/"
+                                    to="https://threads.net/navdana"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     aria-label="Threads"
@@ -267,7 +313,7 @@ const Footer = () => {
                                     <BsFillThreadsFill className="h-6 w-6 text-black group-hover:text-black" />
                                 </Link>
                                 <Link
-                                    to="https://linkedin.com/"
+                                    to="https://linkedin.com/navdana"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     aria-label="LinkedIn"
@@ -284,7 +330,7 @@ const Footer = () => {
                                     </svg>
                                 </Link>
                                 <Link
-                                    to="https://www.youtube.com/"
+                                    to="https://www.youtube.com/navdana"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     aria-label="YouTube"
@@ -308,8 +354,8 @@ const Footer = () => {
                                 <Link to="/cookies" className="text-gray-600 hover:text-pink-500 transition-colors">Cookies</Link>
                             </div> */}
                             {/* We Accept */}
-                            <div className="flex flex-wrap items-center justify-center space-x-3 mt-4 md:mt-0">
-                                <span className="text-gray-700 text-sm">We accept</span>
+                            <div className="flex items-center space-x-3 mt-4 md:mt-0 overflow-x-auto no-scrollbar px-1">
+                                <span className="text-gray-700 text-sm flex-shrink-0">We accept</span>
                                 {/* Visa */}
                                 <Link
                                     to="https://www.visa.com/"
@@ -319,7 +365,7 @@ const Footer = () => {
                                     title="Visa"
                                     style={{ textDecoration: "none" }}
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 32" className="h-6 w-auto">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 32" className="h-4 w-auto">
                                         <path d="M22.5 22.6l1.5-9.2h2.4l-1.5 9.2h-2.4zM34.3 13.5c-.5-.2-1.3-.4-2.3-.4-2.5 0-4.3 1.3-4.3 3.1 0 1.3 1.3 2 2.2 2.4.9.4 1.2.7 1.2 1.1 0 .6-.7.9-1.3.9-.9 0-1.4-.1-2.1-.4l-.3-.1-.3 2c.5.2 1.5.4 2.5.4 2.6 0 4.4-1.3 4.5-3.2 0-1.1-.7-2-2.1-2.6-.9-.4-1.5-.7-1.5-1.1 0-.4.5-.8 1.3-.8.7 0 1.3.2 1.7.4l.2.1.4-1.9zm5.3-.3h-1.9c-.6 0-1 .2-1.3.8l-3.6 8.6h2.5s.4-1.2.5-1.5h3.1c.1.3.3 1.5.3 1.5h2.2l-2.1-9.4zM11.7 22.6l2.4-9.2h2.3l-2.4 9.2h-2.3zm-3.8-9.2l-2.2 6-1.1-5.5c-.2-.6-.6-.8-1.2-.9H.2l-.1.4c.9.2 1.8.5 2.4.8.4.2.5.4.6.8l1.8 7.2h2.4l3.7-9.2H7.9z"/>
                                     </svg>
                                 </Link>
@@ -332,7 +378,7 @@ const Footer = () => {
                                     title="Mastercard"
                                     style={{ textDecoration: "none" }}
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 32" className="h-6 w-auto">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 32" className="h-4 w-auto">
                                         <circle cx="18" cy="16" r="8" fill="#EB001B"/>
                                         <circle cx="30" cy="16" r="8" fill="#F79E1B"/>
                                         <path d="M24 8a8 8 0 0 0 0 16 8 8 0 0 0 0-16z" fill="#FF5F00"/>
@@ -347,7 +393,7 @@ const Footer = () => {
                                     title="RuPay"
                                     style={{ textDecoration: "none" }}
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 32" className="h-6 w-auto">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 32" className="h-4 w-auto">
                                         <text x="4" y="21" fontSize="12" fontWeight="bold" fill="#1A237E">Ru</text>
                                         <text x="20" y="21" fontSize="12" fontWeight="bold" fill="#FF9800">Pay</text>
                                     </svg>
@@ -361,7 +407,7 @@ const Footer = () => {
                                     title="American Express"
                                     style={{ textDecoration: "none" }}
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 32" className="h-6 w-auto">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 32" className="h-4 w-auto">
                                         <rect width="48" height="32" fill="#2E77BC"/>
                                         <text x="6" y="21" fontSize="11" fontWeight="bold" fill="white">AMEX</text>
                                     </svg>
@@ -375,7 +421,7 @@ const Footer = () => {
                                     title="Paytm"
                                     style={{ textDecoration: "none" }}
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 32" className="h-6 w-auto">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 32" className="h-4 w-auto">
                                         <text x="4" y="21" fontSize="12" fontWeight="bold" fill="#00B9F1">Pay</text>
                                         <text x="26" y="21" fontSize="12" fontWeight="bold" fill="#002970">tm</text>
                                     </svg>
@@ -389,7 +435,7 @@ const Footer = () => {
                                     title="UPI"
                                     style={{ textDecoration: "none" }}
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 32" className="h-6 w-auto">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 32" className="h-4 w-auto">
                                         <text x="8" y="21" fontSize="12" fontWeight="bold" fill="#2E7D32">UPI</text>
                                     </svg>
                                 </Link>
@@ -402,7 +448,7 @@ const Footer = () => {
                                     title="Google Pay"
                                     style={{ textDecoration: "none" }}
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 32" className="h-6 w-auto">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 32" className="h-4 w-auto">
                                         <text x="4" y="21" fontSize="12" fontWeight="bold" fill="#4285F4">G</text>
                                         <text x="16" y="21" fontSize="12" fontWeight="bold" fill="#34A853">P</text>
                                         <text x="26" y="21" fontSize="12" fontWeight="bold" fill="#FBBC05">a</text>
