@@ -36,7 +36,7 @@ export default function SuitSet() {
     <div className="container mx-auto">
       {/* Heading */}
       <h2 className="text-3xl font-medium text-center mb-13">
-        WOMEN'S WEAR
+        Latest Launch
       </h2>
 
       {/* Product Grid */}
