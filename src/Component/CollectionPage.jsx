@@ -13,7 +13,7 @@ export default function Collection() {
   const touchStartX = useRef(null);
   const touchEndX = useRef(null);
   
-   const API_PRODUCT = ` https://navdana.com/api/v1/product/category/${id}`;
+   const API_PRODUCT = `https://navdana.com/api/v1/product/category/${id}`;
 
   useEffect(() => {
     const fetchCollections = async () => {
