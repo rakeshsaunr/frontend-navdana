@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import namer from "color-namer";
 
@@ -12,8 +12,8 @@ const ColorNameConverter = (hex) => {
   }
 };
 
-const API_URL = "https://navdana.com/api/v1/product";
-const CATEGORY_API = "https://navdana.com/api/v1/category";
+const API_URL = "http://192.168.1.11:5000/api/v1/product";
+const CATEGORY_API = "http://192.168.1.11:5000/api/v1/category";
 
 // Default variant row
 const defaultVariantRow = () => ({
@@ -24,14 +24,9 @@ const defaultVariantRow = () => ({
   size: "",
 });
 
-const getProductId = (prod) => prod?.id || prod?._id || prod?.ID || prod?.Id || prod?.productId || null;
-
 const Product = () => {
-  // Redux removed: use local state for products, loading, error
+  console.log("Product Route Hit")
   const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [reduxError, setReduxError] = useState(""); // renamed for minimal code change
-
   const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
     name: "",
@@ -43,6 +38,7 @@ const Product = () => {
     isActive: true,
   });
   const [editingId, setEditingId] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [imageView, setImageView] = useState({ open: false, url: "", alt: "" });
@@ -51,10 +47,9 @@ const Product = () => {
   useEffect(() => {
     fetchProducts();
     fetchCategories();
-    // eslint-disable-next-line
   }, []);
 
-  // Always ensure product.variant is an array for display
+  // Fix: Always ensure product.variant is an array for display
   const normalizeVariants = (variant) => {
     if (Array.isArray(variant)) return variant;
     if (variant && typeof variant === "object") return [variant];
@@ -63,21 +58,19 @@ const Product = () => {
 
   const fetchProducts = async () => {
     setLoading(true);
-    setReduxError("");
     try {
       const res = await axios.get(API_URL);
+      console.log("Logs in the Product Section",res.data.data)
+      // Fix: Ensure each product.variant is always an array
       const prods = (res.data?.data || []).map((prod) => ({
         ...prod,
         variant: normalizeVariants(prod.variant),
-        id: getProductId(prod),
       }));
       setProducts(prods);
     } catch (error) {
-      setReduxError(error?.response?.data?.message || error?.message || "Error fetching products");
-      setProducts([]);
-    } finally {
-      setLoading(false);
+      console.error("Error fetching products:", error);
     }
+    setLoading(false);
   };
 
   const fetchCategories = async () => {
@@ -93,6 +86,7 @@ const Product = () => {
       }
       setCategories(cats);
     } catch (error) {
+      console.error("Error fetching categories:", error);
       setCategories([]);
     }
   };
@@ -188,86 +182,75 @@ const Product = () => {
     return "";
   };
 
-  // --- PRODUCT UPDATE LOGIC (no redux) ---
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError("");
     setSuccessMsg("");
-    setReduxError("");
-    setLoading(true);
-
     const error = validateForm();
     if (error) {
       setFormError(error);
-      setLoading(false);
       return;
     }
-
+    setLoading(true);
     try {
-      const token = localStorage.getItem("token");
+      // Ensure all variants have colorName filled using ColorNameConverter
+      const variantsWithColorName = formData.variants.map((v) => ({
+        ...v,
+        colorName: v.colorName && v.colorName.trim() !== "" ? v.colorName : ColorNameConverter(v.color),
+      }));
 
-      const dataToSend = {
-        name: formData.name,
-        description: formData.description,
-        category: formData.category,
-        price: Number(formData.price),
-        isActive: formData.isActive,
-        variant: formData.variants.map(v => ({
-          color: v.color,
-          colorName: v.colorName || ColorNameConverter(v.color),
-          sku: v.sku,
-          stock: Number(v.stock),
-          size: v.size,
-        })),
+      let dataToSend = new FormData();
+      dataToSend.append("name", formData.name);
+      dataToSend.append("description", formData.description);
+      dataToSend.append("category", formData.category);
+      dataToSend.append("price", formData.price);
+      dataToSend.append("isActive", formData.isActive ? "true" : "false");
+      // Ensure 'variant' is always an array and matches backend expectations
+      dataToSend.append("variant", JSON.stringify(variantsWithColorName));
+
+      formData.images.forEach((img) => {
+        if (img.file) {
+          dataToSend.append("images", img.file); // new file
+          dataToSend.append("alts", img.alt || "");
+        } else if (img._id) {
+          dataToSend.append("existingImages", img._id); // only send if still present
+        }
+      });
+      
+      
+      
+
+      // Fetch token from localStorage
+      const token = localStorage.getItem("token");
+      const config = {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
       };
 
       if (editingId) {
-        // EDIT PRODUCT
-        const res = await axios.put(`${API_URL}/${editingId}`, dataToSend, config);
-
-        // Defensive: ensure id is always present and fallback to editingId if not
-        const updatedProduct = {
-          ...res.data.data,
-          id: getProductId(res.data.data) || editingId,
-        };
-
-        // Update local products state
-        setProducts((prev) =>
-          prev.map((p) =>
-            getProductId(p) === updatedProduct.id ? updatedProduct : p
-          )
-        );
+        await axios.put(`${API_URL}/${editingId}`, dataToSend, config);
         setSuccessMsg("Product updated successfully!");
       } else {
-        // ADD PRODUCT
-        const res = await axios.post(API_URL, dataToSend, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const newProduct = {
-          ...res.data.data,
-          id: getProductId(res.data.data),
-        };
-        setProducts((prev) => [...prev, newProduct]);
+        await axios.post(API_URL, dataToSend, config);
         setSuccessMsg("Product added successfully!");
       }
-
       resetForm();
       fetchProducts();
-    } catch (err) {
-      const msg = err?.response?.data?.message || err.message || "Error saving product";
-      setReduxError(msg);
-      setFormError(msg);
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      setFormError(
+        error?.response?.data?.message ||
+        error?.message ||
+        "Error saving product"
+      );
     }
+    setLoading(false);
   };
 
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this product?")) {
       setLoading(true);
-      setReduxError("");
       try {
         // Fetch token from localStorage
         const token = localStorage.getItem("token");
@@ -277,16 +260,16 @@ const Product = () => {
           },
         };
         await axios.delete(`${API_URL}/${id}`, config);
-        setProducts((prev) => prev.filter((p) => getProductId(p) !== id));
         setSuccessMsg("Product deleted successfully!");
         fetchProducts();
       } catch (error) {
-        const msg = error?.response?.data?.message || error?.message || "Error deleting product";
-        setReduxError(msg);
-        setFormError(msg);
-      } finally {
-        setLoading(false);
+        setFormError(
+          error?.response?.data?.message ||
+          error?.message ||
+          "Error deleting product"
+        );
       }
+      setLoading(false);
     }
   };
 
@@ -295,8 +278,8 @@ const Product = () => {
       name: product.name || "",
       description: product.description || "",
       images: product.images
-        ? product.images.map((img) => ({ file: null, alt: img.alt || "" }))
-        : [{ file: null, alt: "" }],
+      ? product.images.map((img) => ({ file: null, url: img.url, alt: img.alt || "", _id: img._id }))
+      : [{ file: null, alt: "" }],
       category: product.category?._id || "",
       price: product.price || "",
       variants: normalizeVariants(product.variant).length > 0
@@ -310,7 +293,7 @@ const Product = () => {
         : [defaultVariantRow()],
       isActive: product.isActive ?? true,
     });
-    setEditingId(getProductId(product));
+    setEditingId(product._id);
     setFormError("");
     setSuccessMsg("");
     setShowFormPage(true);
@@ -380,10 +363,10 @@ const Product = () => {
                 {editingId ? "Edit Product" : "Add Product"}
               </span>
             </h2>
-            {(formError || reduxError) && (
+            {formError && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-3 mb-4 rounded-lg flex items-center gap-2 shadow">
                 <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01M21 12A9 9 0 113 12a9 9 0 0118 0z"></path></svg>
-                <span>{formError || reduxError}</span>
+                <span>{formError}</span>
               </div>
             )}
             {successMsg && (
@@ -786,7 +769,7 @@ const Product = () => {
               <tbody>
                 {products.map((prod, rowIdx) => (
                   <tr
-                    key={prod.id || prod._id}
+                    key={prod._id}
                     className={`transition-all duration-200 bg-white hover:shadow-lg hover:scale-[1.01] group ${
                       rowIdx % 2 === 0 ? "bg-white" : "bg-blue-50"
                     }`}
@@ -885,7 +868,7 @@ const Product = () => {
                           <span className="material-icons align-middle text-base mr-1">Edit</span>
                         </button>
                         <button
-                          onClick={() => handleDelete(prod.id || prod._id)}
+                          onClick={() => handleDelete(prod._id)}
                           className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-2 py-1 rounded-lg shadow font-semibold transition-all duration-150 active:scale-95"
                         >
                           <span className="material-icons align-middle text-base mr-1">Delete</span>
