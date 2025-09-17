@@ -223,11 +223,7 @@ const Product = () => {
 
       if (editingId) {
         // EDIT PRODUCT
-        const res = await axios.put(`${API_URL}/${editingId}`, dataToSend, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const res = await axios.put(`${API_URL}/${editingId}`, dataToSend, config);
 
         // Defensive: ensure id is always present and fallback to editingId if not
         const updatedProduct = {
