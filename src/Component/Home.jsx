@@ -1,7 +1,7 @@
 import React from "react";
 import OfferZone from "./Offerzone";  
 import Collection from "./Collection";
-// import ExploreAndBuy from "./ExploreAndBuy";
+import ExploreAndBuy from "./ExploreAndBuy";
 import SuitSet from "./SuitSet";
 // import LuxeSet from "./LuxeSet";
 import Footer1 from "./Footer/Footer1";
@@ -13,8 +13,8 @@ const Home = () => {
     <div>
       <OfferZone />
       <Collection />
-      {/* <ExploreAndBuy /> */}
       <SuitSet />
+      <ExploreAndBuy />
       {/* <LuxeSet /> */}
       {/* <InstagramReels /> */}
       <Footer1 />
