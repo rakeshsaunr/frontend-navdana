@@ -48,6 +48,11 @@ const menuItems = [
     label: "Settings",
     icon: <span role="img" aria-label="Settings">⚙</span>,
   },
+  {
+  to: "/dashboard/coupons",
+  label: "Coupons",
+  icon: <span role="img" aria-label="Coupons">🎟</span>,
+},
 ];
 
 export default function Sidebar() {

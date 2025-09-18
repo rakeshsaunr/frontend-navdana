@@ -47,6 +47,7 @@ import Product from "./Component/pages/dashboard/Product";
 import Banners from "./Component/pages/dashboard/Banners";
 import Users from "./Component/pages/dashboard/Users";
 import Orders from "./Component/pages/dashboard/Orders";
+import Coupons from "./Component/pages/dashboard/Coupans";
 
 
 // Order page
@@ -123,6 +124,10 @@ function App() {
               <Route
                 path="/dashboard/orders"
                 element={<ProtectedRoute role="admin" element={<DashboardLayout><Orders /></DashboardLayout>} />}
+              />
+              <Route 
+                path="/dashboard/coupons"
+                element={<ProtectedRoute role="admin" element={<DashboardLayout><Coupons /></DashboardLayout>} />}
               />
 
               {/* Home */}

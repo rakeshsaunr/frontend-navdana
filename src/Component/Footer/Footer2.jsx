@@ -293,7 +293,7 @@ const Footer = () => {
                                     <Facebook className="h-6 w-6 text-[#1778F2] group-hover:text-[#1778F2]" />
                                 </Link>
                                 <Link
-                                    to="https://instagram.com/navdana"
+                                    to="https://instagram.com/navdanaa"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     aria-label="Instagram"
