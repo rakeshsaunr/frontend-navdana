@@ -156,7 +156,7 @@ const Header = () => {
       {/* Top promotional strip */}
       <div className="text-center bg-gray-950 text-white py-3 animate-fade-in">
         <p className="text-sm sm:text-base font-semibold tracking-wide animate-pulse">
-          ⚡ Limited time offer: Get 20% off your first order! ⚡
+          ⚡ Coming Live on 20th September 2025 ⚡
         </p>
       </div>
 
@@ -194,9 +194,9 @@ const Header = () => {
         {/* Right Section: Icons */}
         <div className="flex items-center space-x-6 animate-fade-in-right">
           {/* Search */}
-          <button onClick={() => navigate("/coming-soon")} aria-label="Search" className="transition-transform hover:scale-110">
+          {/* <button onClick={() => navigate("/coming-soon")} aria-label="Search" className="transition-transform hover:scale-110">
             <Search className="w-6 h-6 text-gray-700 hover:text-gray-900 transition-colors" />
-          </button>
+          </button> */}
 
           {/* Cart */}
           <div className="relative cursor-pointer transition-transform hover:scale-110" onClick={() => navigate("/cart")} aria-label="Shopping Cart">

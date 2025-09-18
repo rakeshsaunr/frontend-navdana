@@ -299,12 +299,12 @@ const InstagramReels = ({ userId, accessToken }) => {
                 </div>
                 <div className="p-4 sm:p-6">
                   <div className="flex gap-3 sm:gap-4 mb-3 sm:mb-4">
-                    <img
+                    {/* <img
                       className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg border-2 border-gray-200 shadow"
                       src={video.thumbnail_url}
                       alt={video.caption}
-                    />
-                    <div className="flex-1 min-w-0">
+                    /> */}
+                    {/* <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-gray-800 text-xs sm:text-sm mb-1 truncate">
                         Instagram Reel
                       </h3>
@@ -316,7 +316,7 @@ const InstagramReels = ({ userId, accessToken }) => {
                           {formatDate(video.timestamp)}
                         </span>
                       </div>
-                    </div>
+                    </div> */}
                   </div>
                   {/* <button
                     onClick={() => handleAddToCart(video)}
