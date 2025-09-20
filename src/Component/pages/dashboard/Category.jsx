@@ -118,7 +118,7 @@ const Category = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this category?")) {
+    if (window.confirm("Are you sure you want to delete that category?")) {
       setFormError("");
       setSuccessMsg("");
       setLoading(true);
