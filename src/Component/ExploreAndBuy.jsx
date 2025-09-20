@@ -9,7 +9,7 @@ export default function App() {
   const DEMO_ACCESS_TOKEN = import.meta.env.VITE_INSTA_ACCESS_TOKEN
 
   return (
-    <div className="min-h-screen overflow-x-hidden">
+    <div className="overflow-x-hidden">
       <InstagramReels 
         userId={DEMO_USER_ID} 
         accessToken={DEMO_ACCESS_TOKEN} 
@@ -162,11 +162,6 @@ const InstagramReels = ({ userId, accessToken }) => {
       : caption;
   };
 
-  // Dummy add to cart handler
-  // const handleAddToCart = (video) => {
-  //   alert("Added to cart: " + (truncateCaption(video.caption, 30) || "Instagram Reel"));
-  // };
-
   // Add to cart handler for modal
   const handleModalAddToCart = (video) => {
     setModalAddToCartVideo(video.id);
@@ -297,34 +292,6 @@ const InstagramReels = ({ userId, accessToken }) => {
                     </span>
                   </button>
                 </div>
-                <div className="p-4 sm:p-6">
-                  <div className="flex gap-3 sm:gap-4 mb-3 sm:mb-4">
-                    {/* <img
-                      className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg border-2 border-gray-200 shadow"
-                      src={video.thumbnail_url}
-                      alt={video.caption}
-                    /> */}
-                    {/* <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-800 text-xs sm:text-sm mb-1 truncate">
-                        Instagram Reel
-                      </h3>
-                      <p className="text-gray-600 text-xs mb-2 truncate">
-                        {truncateCaption(video.caption)}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs sm:text-sm font-bold text-gray-500">
-                          {formatDate(video.timestamp)}
-                        </span>
-                      </div>
-                    </div> */}
-                  </div>
-                  {/* <button
-                    onClick={() => handleAddToCart(video)}
-                    className="w-full flex justify-center items-center bg-black text-white py-1 sm:py-2 rounded-md font-semibold hover:bg-gray-900 transition-all duration-200 shadow text-xs sm:text-sm"
-                  >
-                    Add to Cart
-                  </button> */}
-                </div>
               </div>
             </div>
           ))}
@@ -350,6 +317,7 @@ const InstagramReels = ({ userId, accessToken }) => {
     </div>
   );
 };
+
 
 // VideoModal component for full width video on mobile, no slider/slide icons
 const VideoModal = ({

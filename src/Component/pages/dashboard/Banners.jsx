@@ -16,6 +16,8 @@ const Banners = () => {
   const [formError, setFormError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
+  const token = localStorage.getItem("token"); // or sessionStorage
+
   useEffect(() => {
     fetchBanners();
     // eslint-disable-next-line
@@ -25,7 +27,9 @@ const Banners = () => {
     setLoading(true);
     setFormError("");
     try {
-      const res = await axios.get(API_URL);
+      const res = await axios.get(API_URL, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       let bannersData = res.data?.data || res.data || [];
       if (!Array.isArray(bannersData)) {
         if (Array.isArray(res.data?.banners)) {
@@ -38,8 +42,8 @@ const Banners = () => {
     } catch (error) {
       setFormError(
         error?.response?.data?.message ||
-        error?.message ||
-        "Error fetching banners"
+          error?.message ||
+          "Error fetching banners"
       );
       setBanners([]);
       console.error("Error fetching banners:", error);
@@ -70,17 +74,17 @@ const Banners = () => {
       dataToSend.append("isActive", formData.isActive);
 
       if (imageFile) {
-        dataToSend.append("image", imageFile);
+        // ✅ match backend multer field
+        dataToSend.append("url", imageFile);
       }
 
       if (editingId) {
-        await axios.put(
-          `${API_URL}/${editingId}`,
-          dataToSend,
-          {
-            headers: { "Content-Type": "multipart/form-data" },
-          }
-        );
+        await axios.put(`${API_URL}/${editingId}`, dataToSend, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
+          },
+        });
         setSuccessMsg("Banner updated successfully!");
       } else {
         if (!imageFile) {
@@ -88,13 +92,11 @@ const Banners = () => {
           setLoading(false);
           return;
         }
-        await axios.post(
-          API_URL,
-          dataToSend,
-          {
-            headers: { "Content-Type": "multipart/form-data" },
-          }
-        );
+        await axios.post(`${API_URL}/upload`, dataToSend, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         setSuccessMsg("Banner added successfully!");
       }
       setFormData({ title: "", isActive: true });
@@ -104,8 +106,8 @@ const Banners = () => {
     } catch (error) {
       setFormError(
         error?.response?.data?.message ||
-        error?.message ||
-        "Error saving banner"
+          error?.message ||
+          "Error saving banner"
       );
       console.error("Error saving banner:", error);
     }
@@ -118,14 +120,16 @@ const Banners = () => {
       setSuccessMsg("");
       setLoading(true);
       try {
-        await axios.delete(`${API_URL}/${id}`);
+        await axios.delete(`${API_URL}/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setSuccessMsg("Banner deleted successfully!");
         fetchBanners();
       } catch (error) {
         setFormError(
           error?.response?.data?.message ||
-          error?.message ||
-          "Error deleting banner"
+            error?.message ||
+            "Error deleting banner"
         );
         console.error("Error deleting banner:", error);
       }
@@ -157,7 +161,9 @@ const Banners = () => {
   return (
     <div className="p-0 m-0 w-full min-h-screen bg-gray-50">
       <div className="w-full px-2 sm:px-4 md:px-8 py-8">
-        <h2 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-gray-800 text-center tracking-tight w-full">Manage Banners</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-gray-800 text-center tracking-tight w-full">
+          Manage Banners
+        </h2>
 
         {/* Alerts */}
         {formError && (
@@ -179,7 +185,9 @@ const Banners = () => {
         >
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1 w-full">
-              <label className="font-medium text-gray-700 mb-1 text-sm sm:text-base" htmlFor="cat-name">Banner Title</label>
+              <label className="font-medium text-gray-700 mb-1 text-sm sm:text-base">
+                Banner Title
+              </label>
               <input
                 type="text"
                 name="title"
@@ -191,7 +199,9 @@ const Banners = () => {
               />
             </div>
             <div className="flex flex-col gap-1 w-full">
-              <label className="font-medium text-gray-700 mb-1 text-sm sm:text-base" htmlFor="cat-image">Image</label>
+              <label className="font-medium text-gray-700 mb-1 text-sm sm:text-base">
+                Image
+              </label>
               <input
                 type="file"
                 name="image"
@@ -202,7 +212,9 @@ const Banners = () => {
               />
             </div>
             <div>
-              <label className="flex items-center gap-2 text-sm select-none">Active</label>
+              <label className="flex items-center gap-2 text-sm select-none">
+                Active
+              </label>
               <input
                 type="checkbox"
                 name="isActive"
@@ -212,7 +224,7 @@ const Banners = () => {
               />
             </div>
           </div>
-          {/* Move Add Banner button and Cancel button below the form fields */}
+          {/* Buttons */}
           <div className="flex flex-col gap-2 col-span-1 md:col-span-2 mt-2 w-full">
             <div className="flex gap-2 flex-wrap">
               <button
@@ -242,134 +254,47 @@ const Banners = () => {
           </div>
         </form>
 
-        {/* Mobile Card List */}
-        <div className="block md:hidden">
-          {safeBanners.length === 0 && (
-            <div className="text-center p-4 text-gray-500">
-              {loading ? "Loading..." : "No banners found"}
-            </div>
-          )}
-          <div className="space-y-4">
-            {safeBanners.map((banner) => (
-              <div
-                key={banner._id}
-                className="bg-white rounded-lg shadow border border-gray-200 p-4 flex flex-col sm:flex-row sm:items-center gap-4"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-24 h-16 flex items-center justify-center bg-gray-100 rounded overflow-hidden border border-gray-200">
-                    {banner.url ? (
-                      <img
-                        src={banner.url}
-                        alt={banner.title}
-                        className="object-contain h-16 w-24"
-                      />
-                    ) : (
-                      <span className="text-gray-400 text-xs">No Image</span>
-                    )}
-                  </div>
-                  <div>
-                    <div className="font-semibold text-base">{banner.title}</div>
-                    <div className="mt-1">
-                      <span
-                        className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
-                          banner.isActive
-                            ? "bg-green-100 text-green-700"
-                            : "bg-red-100 text-red-700"
-                        }`}
+        {/* Banner listing */}
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+          <h3 className="text-lg font-semibold mb-4">All Banners</h3>
+          {safeBanners.length === 0 ? (
+            <p className="text-gray-500 text-sm">No banners found.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {safeBanners.map((banner) => (
+                <div
+                  key={banner._id}
+                  className="border rounded-lg overflow-hidden shadow-sm bg-gray-50"
+                >
+                  <img
+                    src={banner.url} // ✅ using `url` from your API
+                    alt={banner.title}
+                    className="w-full h-40 object-cover"
+                  />
+                  <div className="p-3">
+                    <h4 className="font-medium text-gray-800">{banner.title}</h4>
+                    <p className="text-xs text-gray-500">
+                      Status: {banner.isActive ? "Active" : "Inactive"}
+                    </p>
+                    <div className="flex gap-2 mt-2">
+                      {/* <button
+                        onClick={() => handleEdit(banner)}
+                        className="bg-yellow-500 hover:bg-yellow-600 transition text-white px-3 py-1 rounded text-xs"
                       >
-                        {banner.isActive ? "Active" : "Inactive"}
-                      </span>
+                        Edit
+                      </button> */}
+                      <button
+                        onClick={() => handleDelete(banner._id)}
+                        className="bg-red-500 hover:bg-red-600 transition text-white px-3 py-1 rounded text-xs"
+                      >
+                        Delete
+                      </button>
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-2 mt-3 sm:mt-0 sm:ml-auto">
-                  <button
-                    onClick={() => handleEdit(banner)}
-                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-1.5 rounded font-medium shadow transition-colors duration-150 disabled:opacity-60 text-xs"
-                    disabled={loading}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(banner._id)}
-                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 rounded font-medium shadow transition-colors duration-150 disabled:opacity-60 text-xs"
-                    disabled={loading}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Desktop Table */}
-        <div className="hidden md:block overflow-x-auto w-full">
-          <table className="w-full border border-gray-200 rounded-lg overflow-hidden shadow bg-white text-sm">
-            <thead>
-              <tr className="bg-blue-50 text-blue-900">
-                <th className="border-b px-6 py-3 text-left font-semibold">Title</th>
-                <th className="border-b px-6 py-3 text-left font-semibold">Image</th>
-                <th className="border-b px-6 py-3 text-left font-semibold">Active</th>
-                <th className="border-b px-6 py-3 text-left font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {safeBanners.map((banner, idx) => (
-                <tr
-                  key={banner._id}
-                  className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
-                >
-                  <td className="border-b px-6 py-3">{banner.title}</td>
-                  <td className="border-b px-6 py-3">
-                    {banner.url ? (
-                      <img
-                        src={banner.url}
-                        alt={banner.title}
-                        className="h-16 w-28 object-contain border border-gray-200 rounded shadow"
-                      />
-                    ) : (
-                      <span className="text-gray-400">—</span>
-                    )}
-                  </td>
-                  <td className="border-b px-6 py-3">
-                    <span
-                      className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
-                        banner.isActive
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {banner.isActive ? "Yes" : "No"}
-                    </span>
-                  </td>
-                  <td className="border-b px-6 py-3 space-x-2">
-                    <button
-                      onClick={() => handleEdit(banner)}
-                      className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-1.5 rounded font-medium shadow transition-colors duration-150 disabled:opacity-60"
-                      disabled={loading}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(banner._id)}
-                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 rounded font-medium shadow transition-colors duration-150 disabled:opacity-60"
-                      disabled={loading}
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
               ))}
-              {safeBanners.length === 0 && (
-                <tr>
-                  <td colSpan="4" className="text-center p-6 text-gray-500">
-                    {loading ? "Loading..." : "No banners found"}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+            </div>
+          )}
         </div>
       </div>
     </div>

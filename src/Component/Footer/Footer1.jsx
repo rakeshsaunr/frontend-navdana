@@ -3,14 +3,12 @@ import { Truck, Headphones, ShieldCheck, Mail } from "lucide-react";
 
 export default function Footer1() {
   return (
-    <footer className="bg-[#2C4A52] text-gray-100">
-      <div className="max-w-8xl mx-auto px-6 py-8 mt-[8px]">
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-8 text-center">
-          
-          {/* 1. Free Shipping */}
+    <footer className="bg-[#2C4A52] text-gray-100 mt-4">
+      <div className="max-w-8xl mx-auto px-4 py-4 sm:py-8">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 sm:gap-8 text-center">
           <div className="flex flex-col items-center">
-            <div className="p-3 rounded-lg bg-gray-800 mb-6">
-              <Truck size={32} aria-hidden="true" />
+            <div className="p-3 rounded-lg bg-gray-800 mb-4 sm:mb-6">
+              <Truck size={32} />
             </div>
             <h3 className="text-lg font-semibold">Free Shipping</h3>
             <p className="text-sm text-gray-300">
@@ -18,22 +16,19 @@ export default function Footer1() {
             </p>
           </div>
 
-          {/* 2. Customer Service */}
           <div className="flex flex-col items-center">
-            <div className="p-3 rounded-lg bg-gray-800 mb-3">
-              <Headphones size={32} aria-hidden="true" />
+            <div className="p-3 rounded-lg bg-gray-800 mb-4 sm:mb-6">
+              <Headphones size={32} />
             </div>
             <h3 className="text-lg font-semibold">Customer Service</h3>
             <p className="text-sm text-gray-300">
               Mon–Fri: 10am–6pm • Live chat & phone
-             
             </p>
           </div>
 
-          {/* 3. Secure Payments */}
           <div className="flex flex-col items-center">
-            <div className="p-3 rounded-lg bg-gray-800 mb-3">
-              <ShieldCheck size={32} aria-hidden="true" />
+            <div className="p-3 rounded-lg bg-gray-800 mb-4 sm:mb-6">
+              <ShieldCheck size={32} />
             </div>
             <h3 className="text-lg font-semibold">Secure Payments</h3>
             <p className="text-sm text-gray-300">
@@ -41,28 +36,19 @@ export default function Footer1() {
             </p>
           </div>
 
-          {/* 4. Contact Us */}
           <div className="flex flex-col items-center">
-            <div className="p-3 rounded-lg bg-gray-800 mb-3">
-              <Mail size={32} aria-hidden="true" />
+            <div className="p-3 rounded-lg bg-gray-800 mb-4 sm:mb-6">
+              <Mail size={32} />
             </div>
             <h3 className="text-lg font-semibold">Contact Us</h3>
             <p className="text-sm text-gray-300">
-              Email:{" "}
-              <a href="mailto:support@example.com" className="underline">
-                contact@navdana.com
-              </a>
+              Email: <a href="mailto:support@example.com" className="underline">contact@navdana.com</a>
             </p>
             <p className="text-sm text-gray-300">
-              Phone:{" "}
-              <a href="tel:+919311120477" className="underline">
-                +91 9311120477
-              </a>
+              Phone: <a href="tel:+919311120477" className="underline">+91 9311120477</a>
             </p>
           </div>
         </div>
-
-        
       </div>
     </footer>
   );

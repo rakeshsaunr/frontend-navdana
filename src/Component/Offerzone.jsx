@@ -1,38 +1,56 @@
-// src/components/OfferZone.jsx
-import { Swiper, SwiperSlide } from "swiper/react";
-import "swiper/css"; // core Swiper styles
-import "swiper/css/autoplay";
-// import { Autoplay } from "swiper";
+import React, { useEffect, useState } from "react";
+import Slider from "react-slick";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
+import axios from "axios";
 
-// Use public folder paths directly
-const offer1 = "/Images/model1.PNG";
-const offer2 = "/Images/model2.png";
-const offer3 = "/Images/model3.png"
+const API_URL = "http://localhost:5000/api/v1/banner";
 
 export default function OfferZone() {
+  const [banners, setBanners] = useState([]);
+
+  useEffect(() => {
+    fetchBanners();
+  }, []);
+
+  const fetchBanners = async () => {
+    try {
+      const res = await axios.get(API_URL);
+      setBanners(res.data?.data || []);
+    } catch (error) {
+      console.error("Error fetching banners:", error);
+    }
+  };
+
+  const settings = {
+    dots: true,
+    infinite: true,
+    speed: 1000,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: 3000,
+    arrows: false,
+    pauseOnHover: false,
+    lazyLoad: "ondemand", // <-- Enables lazy loading
+  };
+
+  if (!banners.length) return null;
+
   return (
-    <div className="w-full overflow-hidden relative">
-      <Swiper
-        // modules={[Autoplay]}
-        spaceBetween={0}
-        slidesPerView={1}
-        loop={true}
-        autoplay={{
-          delay: 3000,
-          disableOnInteraction: false,
-        }}
-        speed={1000}
-      >
-        <SwiperSlide>
-          <img src={offer3} alt="Offer 1" className="w-full h-full object-cover" />
-        </SwiperSlide>
-        <SwiperSlide>
-          <img src={offer1} alt="Offer 2" className="w-full h-full object-cover" />
-        </SwiperSlide>
-        <SwiperSlide>
-          <img src={offer2} alt="Offer 2" className="w-full h-full object-cover" />
-        </SwiperSlide>
-      </Swiper>
+    <div className="w-full overflow-hidden">
+      <Slider {...settings}>
+        {banners.map((banner) => (
+          <div key={banner._id} className="relative w-full" style={{ height: "300px" }}>
+            <img
+              src={banner.url}
+              alt={banner.title}
+              loading="lazy" // <-- Native lazy loading for images
+              className="w-full h-full object-cover"
+            />
+          </div>
+        ))}
+      </Slider>
     </div>
   );
 }
