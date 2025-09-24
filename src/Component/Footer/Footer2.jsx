@@ -29,7 +29,7 @@ const Footer = () => {
     useEffect(() => {
         const fetchCategories = async () => {
             try {
-                const res = await axios.get("https://navdana.com/api/v1/category");
+                const res = await axios.get("https://navdana-backend-2.onrender.com/api/v1/category");
                 if (Array.isArray(res.data.categories)) {
                     const activeCategories = res.data.categories.filter(
                         (cat) => cat.isActive && cat.name !== "All Products"
@@ -130,34 +130,52 @@ const Footer = () => {
                         display: none !important;
                     }
                 }
+                /* Custom grid for mobile 2 rows, 2 columns for main sections */
+                @media (max-width: 1023px) {
+                    .footer-main-grid {
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        grid-template-rows: auto auto;
+                        gap: 2rem 1.5rem;
+                        width: 100%;
+                    }
+                    .footer-main-grid > .footer-section {
+                        min-width: 0;
+                    }
+                }
+                @media (min-width: 1024px) {
+                    .footer-main-grid {
+                        display: flex;
+                        flex-direction: row;
+                        gap: 0;
+                        width: 100%;
+                    }
+                }
             `}</style>
             <footer className="bg-white text-gray-900 relative overflow-hidden font-sans">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
                     {/* Responsive flex for sections with vertical divider */}
-                    {/* MOBILE: Stack sections vertically, hide dividers */}
-                    <div className="flex flex-col gap-8 lg:gap-0 lg:flex-row items-stretch justify-center">
-                        {/* Section 0: Logo */}
-                        <div className="flex flex-col items-center sm:items-start mb-8 lg:mb-0 lg:mr-10">
-                            <Link to="/" className="mb-4 no-underline">
-                                <div className="logo-pulse">
+                    {/* MOBILE: 2 rows, 2 columns for CATEGORIES, INFORMATION, POLICIES, NEWSLETTER */}
+                    <div className="footer-main-grid items-stretch justify-center">
+                        {/* Section 0: Logo (keep above grid on mobile, not in grid) */}
+                        <div className="flex flex-col items-left sm:items-start mb-8 lg:mb-0 lg:mr-10 col-span-2" style={{ gridColumn: "1 / span 2" }}>
+                            <div>
+                                <Link to="/" className="mb-4 no-underline">
                                     <img
                                         src="/logo.png"
                                         alt="Navdana Logo"
                                         width={35}
                                         height={35}
-                                        className="h-10 w-auto mb-3"
+                                        className="h-10 w-auto mb-3 logo-pulse"
                                         aria-label="Navdana Logo"
                                     />
-                                </div>
-                            </Link>
-                            <span className="text-xs text-gray-500 mt-1 text-center sm:text-left">Ethnic Wear for Women</span>
+                                </Link>
+                                <span className="text-xs text-gray-500 mt-1 text-left sm:text-left">Ethnic Wear for Women</span>
+                            </div>   
                         </div>
 
-                        {/* Divider */}
-                        <div className="hidden lg:block footer-divider self-stretch" />
-
                         {/* Categories */}
-                        <div className="flex-1">
+                        <div className="footer-section flex-1">
                             <h4 className="text-sm tracking-widest font-semibold mb-4 text-center lg:text-left">
                                 CATEGORIES
                             </h4>
@@ -187,42 +205,35 @@ const Footer = () => {
                             )}
                         </div>
 
-                        {/* Divider */}
-                        <div className="hidden lg:block footer-divider self-stretch" />
-
                         {/* Section 2: Information */}
-                        <div className="flex-1 flex flex-col items-center sm:items-center lg:items-start mb-8 lg:mb-0 px-0 lg:px-8 w-full">
+                        <div className="footer-section flex-1 flex flex-col items-center sm:items-center lg:items-start mb-8 lg:mb-0 px-0 lg:px-8 w-full">
                             <h4 className="text-sm tracking-widest font-semibold mb-4 text-center lg:text-left">INFORMATION</h4>
                             <ul className="space-y-2 text-sm text-center sm:text-left">
                                 <li><Link to="/about" className="animated-list-item block">About Us</Link></li>
+                                <li><Link to="/blog-page" className="animated-list-item block">Blog</Link></li>
                                 <li><Link to="/terms-conditions" className="animated-list-item block">Terms & Conditions</Link></li>
                                 <li><Link to="/contact" className="animated-list-item block">Contact Us</Link></li>
-                                <li><Link to="/career" className="animated-list-item block">Careers</Link></li>
+                                {/* <li><Link to="/career" className="animated-list-item block">Careers</Link></li> */}
                                 {/* <li><Link to="/our-team" className="animated-list-item block">Our Team</Link></li> */}
                                 <li><Link to="/faqs" className="animated-list-item block">FAQs</Link></li>
                             </ul>
                         </div>
 
-                        {/* Divider */}
-                        <div className="hidden lg:block footer-divider self-stretch" />
-
                         {/* Section 3: Policies */}
-                        <div className="flex-1 flex flex-col items-center sm:items-center lg:items-start mb-8 lg:mb-0 px-0 lg:px-8 w-full">
+                        <div className="footer-section flex-1 flex flex-col items-center sm:items-center lg:items-start mb-8 lg:mb-0 px-0 lg:px-8 w-full">
                             <h4 className="text-sm tracking-widest font-semibold mb-4 text-center lg:text-left">POLICIES</h4>
                             <ul className="space-y-2 text-sm text-center sm:text-left">
-                                <li><Link to="/return-exchange-request" className="animated-list-item block"> Refund Policy </Link></li>
+                                <li><Link to="/return-exchange-request" className="animated-list-item block">Return/Exchange Request</Link></li>
                                 <li><Link to="/shiping-policy" className="animated-list-item block">Shipping Policy</Link></li>
                                 <li><Link to="/privacy-policy" className="animated-list-item block">Privacy Policy</Link></li>
-                                <li><Link to="/returns-exchanges" className="animated-list-item block">Exchange Policy</Link></li>
+                                <li><Link to="/returns-exchanges" className="animated-list-item block">Return & Exchange Policy</Link></li>
                                 <li><Link to="/cancel-policy" className="animated-list-item block">Cancellation Policy</Link></li>
+                                <li><Link to="/refund-policy" className="animated-list-item block">Refund Policy</Link></li>
                             </ul>
                         </div>
 
-                        {/* Divider */}
-                        <div className="hidden lg:block footer-divider self-stretch" />
-
                         {/* Section 5: Newsletter */}
-                        <div className="flex-1 flex flex-col items-center sm:items-center lg:items-start px-0 lg:px-8 w-full">
+                        <div className="footer-section flex-1 flex flex-col items-center sm:items-center lg:items-start px-0 lg:px-8 w-full">
                             <h4 className="text-sm tracking-widest font-semibold mb-4 text-center lg:text-left">NEWSLETTER</h4>
                             <p className="text-sm text-gray-600 mb-4 text-center lg:text-left">Subscribe to get special offers, free giveaways, and updates.</p>
                             <form className="space-y-3 w-full max-w-xs mx-auto" onSubmit={handleNewsletter} autoComplete="off">
@@ -293,7 +304,7 @@ const Footer = () => {
                                     <Facebook className="h-6 w-6 text-[#1778F2] group-hover:text-[#1778F2]" />
                                 </Link>
                                 <Link
-                                    to="https://instagram.com/navdanaa"
+                                    to="https://instagram.com/navdana"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     aria-label="Instagram"

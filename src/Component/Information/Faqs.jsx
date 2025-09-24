@@ -14,7 +14,7 @@ const faqData = [
         id: 'payments',
         sectionTitle: 'Payments',
         faqs: [
-            { question: 'What payment methods are accepted?', answer: 'We accept credit/debit cards, UPI, net banking, and Cash on Delivery (COD).' },
+            { question: 'What payment methods are accepted?', answer: 'We accept credit/debit cards, UPI, net banking, and Cash on Delivery.' },
             { question: 'Is my payment secure?', answer: 'Yes, all payments are processed via secure payment gateways to ensure your information is protected.' },
         ],
     },
@@ -30,7 +30,10 @@ const faqData = [
         id: 'returns',
         sectionTitle: 'Returns & Exchanges',
         faqs: [
-            { question: 'Can I return or exchange items?', answer: 'Yes, you can return or exchange items within 7 days of delivery. Items must be unused and have original tags attached. Sale items are not eligible for returns or exchanges.' },
+            { 
+                question: 'Can I return or exchange items?', 
+                answer: 'You can exchange items within 7 days of delivery. As of now, we offer returns only if a wrong or defected product is dispatched from Navdana.' 
+            },
         ],
     },
     {

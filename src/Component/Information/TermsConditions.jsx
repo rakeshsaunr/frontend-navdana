@@ -33,7 +33,7 @@ const terms = [
     title: "Ordering, Payments & Pricing",
     content: [
       "Prices are in INR and include applicable taxes.",
-      "Accepted methods: credit/debit cards, UPI, net banking, COD.",
+      "Accepted methods: credit/debit cards, UPI, net banking.",
       "We may cancel orders due to pricing errors or stock issues.",
     ],
     type: "list",

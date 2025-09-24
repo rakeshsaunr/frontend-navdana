@@ -101,7 +101,7 @@ export default function Contact() {
           </span>
         </p>
         <p className="text-center text-gray-600 mb-6">
-          A-1 Building, Market, Pocket 5, Acharya Niketan, Mayur Vihar, New Delhi, Delhi, 110091
+        B-108, Sector 6, Noida-201301
         </p>
         <form onSubmit={handleSubmit} className="space-y-6 max-w-lg mx-auto">
           <div>

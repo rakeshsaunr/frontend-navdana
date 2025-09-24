@@ -119,7 +119,7 @@ export default function App() {
           </h3>
           <ul className="list-disc ml-7 text-gray-700 space-y-1 text-lg">
             <li>
-              Refunds for cancellations by NAVDANA APPARELS will be processed within <span className="text-[#8b5a3c] font-semibold">10–15 business days</span>.
+              Refunds for cancellations by NAVDANA APPARELS will be processed within <span className="text-[#8b5a3c] font-semibold">7–15 business days</span>.
             </li>
           </ul>
         </section>

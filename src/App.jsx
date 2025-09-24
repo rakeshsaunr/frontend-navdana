@@ -1,5 +1,5 @@
 // App.jsx
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Router } from "react-router-dom";
 import { CartProvider } from "./context/CartContext"; 
 import './App.css';
 
@@ -16,11 +16,11 @@ import Home from './Component/Home';
 
 // INFORMATION Section
 import About from './Component/Information/About';
-import Blog from './Component/Information/Blog';
 import TermsConditions from './Component/Information/TermsConditions';
 import Contact from './Component/Information/Contact';
 import OurTeam from './Component/Information/OurTeam';
 import Faqs from './Component/Information/Faqs';
+import BlogPage from './Component/Information/BlogPage';
 
 // POLICIES
 import ReturnExchangeRequest from './Component/Policies/ReturnExchangeRequest';
@@ -48,6 +48,7 @@ import Banners from "./Component/pages/dashboard/Banners";
 import Users from "./Component/pages/dashboard/Users";
 import Orders from "./Component/pages/dashboard/Orders";
 import Coupons from "./Component/pages/dashboard/Coupans";
+import Blog from "./Component/pages/dashboard/Blog";
 
 
 // Order page
@@ -129,9 +130,15 @@ function App() {
                 path="/dashboard/coupons"
                 element={<ProtectedRoute role="admin" element={<DashboardLayout><Coupons /></DashboardLayout>} />}
               />
+              <Route 
+               path="/dashboard/blog"
+               element={<ProtectedRoute role="admin" element={<DashboardLayout><Blog /></DashboardLayout>} />}   
+              />
+              
 
               {/* Home */}
               <Route path="/" element={<Home />} />
+              <Route path="/blog-page" element={<BlogPage/>} />
 
               {/* Catch-all */}
               <Route path="*" element={<ComingSoon />} />
