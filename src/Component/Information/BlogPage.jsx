@@ -51,7 +51,27 @@ export default function BlogPage() {
         ) : (
           posts.map((p) => (
             <article key={p.id || p._id} className="overflow-hidden">
-              <img src={p.img || p.image} alt={p.title} className="w-70 h-auto object-cover rounded-t" />
+              {p.link ? (
+                <Link
+                  to={p.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block"
+                  style={{ textDecoration: "none" }}
+                >
+                  <img
+                    src={p.img || p.image}
+                    alt={p.title}
+                    className="w-70 h-auto object-cover rounded-t cursor-pointer"
+                  />
+                </Link>
+              ) : (
+                <img
+                  src={p.img || p.image}
+                  alt={p.title}
+                  className="w-70 h-auto object-cover rounded-t"
+                />
+              )}
               <div className="p-4">
                 <div className="text-xs text-gray-500 mb-2">
                   {p.date ||
