@@ -1,34 +1,14 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { Link } from "react-router-dom";
 
 const API_BASE = "https://navdana-backend-2.onrender.com/api/v1/blog/";
 
-export default function NewsPage() {
+export default function BlogPage() {
   const [activePage, setActivePage] = useState(1);
-  // support multi-select filters; clicking "All" clears selection
-  const [selectedFilters, setSelectedFilters] = useState([]);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
-
-  const filters = [
-    "All",
-    "Anarkali suit sets",
-    "Angrakha",
-    "bed linens",
-    "Bunaai’s drape sarees",
-    "chiffon saree",
-    "cotton",
-    "daily wear",
-    "Dress for Ganesh Chaturthi",
-    "Dressing guide",
-    "Elegant Rakhi dresses",
-    "Ethnic wear for Raksha Bandhan",
-    "Festive Kurta Sets",
-    "Independence Day Dresses",
-    "Kurta Sets for Women",
-    "Traditional look",
-  ];
 
   // Fetch posts from API
   useEffect(() => {
@@ -56,53 +36,9 @@ export default function NewsPage() {
     };
   }, []);
 
-  // toggle filter selection (multi-select). If "All" clicked -> clear selection.
-  const toggleFilter = (filter) => {
-    if (filter === "All") {
-      setSelectedFilters([]);
-      return;
-    }
-
-    setSelectedFilters((prev) => {
-      // if previously selected contained this filter, remove it
-      if (prev.includes(filter)) return prev.filter((p) => p !== filter);
-      // else add filter and ensure 'All' isn't selected
-      return [...prev, filter];
-    });
-  };
-
-  // compute filtered posts memoized
-  const filteredPosts = useMemo(() => {
-    if (selectedFilters.length === 0) return posts;
-    return posts.filter((post) =>
-      selectedFilters.some((f) =>
-        (post.tags || []).map((t) => t.toLowerCase()).includes(f.toLowerCase())
-      )
-    );
-  }, [posts, selectedFilters]);
-
   return (
-    <div className="max-w-7xl mx-auto px-4 py-10">
+    <div className="max-w-7xl mx-auto px-2 sm:px-4 py-8">
       <h2 className="text-3xl font-medium text-center mb-13">Blogs Celebs In Navdana</h2>
-
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3 justify-center mb-10">
-        {filters.map((f) => {
-          const isActive =
-            f === "All" ? selectedFilters.length === 0 : selectedFilters.includes(f);
-          return (
-            <button
-              key={f}
-              onClick={() => toggleFilter(f)}
-              className={`px-3 py-1 rounded-full text-sm border transition-colors ${
-                isActive ? "bg-black text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              {f}
-            </button>
-          );
-        })}
-      </div>
 
       {/* Posts Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -110,15 +46,36 @@ export default function NewsPage() {
           <div className="col-span-full text-center text-gray-500 py-20">Loading...</div>
         ) : fetchError ? (
           <div className="col-span-full text-center text-red-500 py-20">{fetchError}</div>
-        ) : filteredPosts.length === 0 ? (
-          <div className="col-span-full text-center text-gray-500 py-20">No posts match the selected filters.</div>
+        ) : posts.length === 0 ? (
+          <div className="col-span-full text-center text-gray-500 py-20">No posts found.</div>
         ) : (
-          filteredPosts.map((p) => (
+          posts.map((p) => (
             <article key={p.id || p._id} className="overflow-hidden">
-              <img src={p.img || p.image} alt={p.title} className="w-full h-56 object-cover" />
+              <img src={p.img || p.image} alt={p.title} className="w-70 h-auto object-cover rounded-t" />
               <div className="p-4">
-                <div className="text-xs text-gray-500 mb-2">{p.date || (p.created && new Date(p.created).toLocaleDateString("en-US", { month: "long", day: "2-digit", year: "numeric" }).toUpperCase())}</div>
-                <h3 className="font-semibold text-lg mb-2">{p.title}</h3>
+                <div className="text-xs text-gray-500 mb-2">
+                  {p.date ||
+                    (p.created &&
+                      new Date(p.created).toLocaleDateString("en-US", {
+                        month: "long",
+                        day: "2-digit",
+                        year: "numeric",
+                      }).toUpperCase())}
+                </div>
+                <h3 className="font-semibold text-lg mb-2">
+                  {p.link ? (
+                    <Link
+                      to={p.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-pink-600"
+                    >
+                      {p.title}
+                    </Link>
+                  ) : (
+                    p.title
+                  )}
+                </h3>
                 <p className="text-sm text-gray-600 mb-3">{p.excerpt || p.description}</p>
                 <div className="flex flex-wrap gap-2 mb-4">
                   {(p.tags || []).map((tg) => (
@@ -127,16 +84,55 @@ export default function NewsPage() {
                     </span>
                   ))}
                 </div>
-                <button className="text-sm border px-3 py-1 rounded hover:bg-gray-100">READ MORE</button>
+                {p.link ? (
+                  <Link
+                    to={p.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm border px-2 py-1 rounded inline-block relative overflow-hidden group"
+                    style={{ transition: "color 0.2s" }}
+                  >
+                    <span
+                      className="absolute inset-0 left-0 w-0 group-hover:w-full h-full bg-black transition-all duration-300 ease-out z-0"
+                      style={{
+                        transition: "width 0.3s cubic-bezier(0.4,0,0.2,1)",
+                      }}
+                    ></span>
+                    <span className="relative z-10 group-hover:text-white transition-colors duration-300">
+                      READ MORE
+                    </span>
+                  </Link>
+                ) : (
+                  <button
+                    className="text-sm border px-3 py-1 rounded relative overflow-hidden group"
+                    disabled
+                    style={{ transition: "color 0.2s" }}
+                  >
+                    <span
+                      className="absolute inset-0 left-0 w-0 group-hover:w-full h-full bg-black transition-all duration-300 ease-out z-0"
+                      style={{
+                        transition: "width 0.3s cubic-bezier(0.4,0,0.2,1)",
+                      }}
+                    ></span>
+                    <span className="relative z-10 transition-colors duration-300">
+                      READ MORE
+                    </span>
+                  </button>
+                )}
               </div>
             </article>
           ))
         )}
       </div>
 
-      {/* Pagination (keeps working for filtered results)*/}
+      {/* Pagination */}
       <div className="mt-10 flex justify-center items-center gap-3">
-        <button onClick={() => setActivePage((p) => Math.max(1, p - 1))} className="px-3 py-1 border rounded">Prev</button>
+        <button
+          onClick={() => setActivePage((p) => Math.max(1, p - 1))}
+          className="px-3 py-1 border rounded"
+        >
+          Prev
+        </button>
         {[1, 2, 3, "...", 30].map((p, i) => (
           <button
             key={i}
@@ -148,7 +144,12 @@ export default function NewsPage() {
             {p}
           </button>
         ))}
-        <button onClick={() => setActivePage((p) => p + 1)} className="px-3 py-1 border rounded">Next</button>
+        <button
+          onClick={() => setActivePage((p) => p + 1)}
+          className="px-3 py-1 border rounded"
+        >
+          Next
+        </button>
       </div>
     </div>
   );

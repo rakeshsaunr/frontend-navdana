@@ -4,11 +4,12 @@ import { useState, useEffect } from "react";
 import { RxDashboard } from "react-icons/rx";
 import { CgMenuLeftAlt } from "react-icons/cg";
 import { MdOutlineClose } from "react-icons/md";
+import { ShoppingCart } from "lucide-react"; // Changed import for order icon
 
 // Dynamic menu items array
 const menuItems = [
   {
-    to: "/dashboard/dashboard",
+    to: "/dashboard",
     label: "Dashboard",
     icon: <RxDashboard className="inline-block text-lg" />,
     className: "flex items-center space-x-2",
@@ -36,7 +37,19 @@ const menuItems = [
   {
     to: "/dashboard/orders",
     label: "Orders",
-    icon: <span role="img" aria-label="Orders">📝</span>,
+    icon: <ShoppingCart className="inline-block text-lg" />, // Changed to ShoppingCart from lucide-react
+  },
+  // Coupans menu item added below
+  {
+    to: "/dashboard/coupons",
+    label: "Coupans",
+    icon: <span role="img" aria-label="Coupans">🏷️</span>,
+  },
+  // Blog menu item added below
+  {
+    to: "/dashboard/blog",
+    label: "Blog",
+    icon: <span role="img" aria-label="Blog">📝</span>,
   },
   {
     to: "/dashboard/reports",
@@ -44,15 +57,15 @@ const menuItems = [
     icon: <span role="img" aria-label="Reports">📊</span>,
   },
   {
+    to: "/dashboard/calendar",
+    label: "Calendar",
+    icon: <span role="img" aria-label="Calendar">🗓️</span>,
+  },
+  {
     to: "/dashboard/settings",
     label: "Settings",
     icon: <span role="img" aria-label="Settings">⚙</span>,
   },
-  {
-  to: "/dashboard/coupons",
-  label: "Coupons",
-  icon: <span role="img" aria-label="Coupons">🎟</span>,
-},
 ];
 
 export default function Sidebar() {

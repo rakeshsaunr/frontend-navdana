@@ -4,7 +4,7 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import axios from "axios";
 
-const API_URL = "https://navdana.com/api/v1/banner";
+const API_URL = "https://navdana-backend-2.onrender.com/api/v1/banner";
 
 export default function OfferZone() {
   const [banners, setBanners] = useState([]);

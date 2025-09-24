@@ -8,7 +8,7 @@ const DEMO_ACCESS_TOKEN =
 
 export default function App() {
   return (
-    <div className="min-h-screen overflow-x-hidden bg-gray-50">
+    <div className="overflow-x-hidden">
 
       <InstagramReels userId={DEMO_USER_ID} accessToken={DEMO_ACCESS_TOKEN} />
     </div>
@@ -153,7 +153,7 @@ const InstagramReels = ({ userId, accessToken }) => {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-96 text-gray-700 p-8">
+      <div className="flex flex-col items-center justify-center min-h-96 text-gray-700 p-6">
         <div className="animate-spin w-12 h-12 border-4 border-gray-300 border-t-transparent rounded-full mb-4"></div>
         <p className="text-lg font-medium">Loading Instagram Media...</p>
       </div>
@@ -220,7 +220,7 @@ const InstagramReels = ({ userId, accessToken }) => {
         {/* Carousel: swipeable, snap, hidden scrollbar */}
         <div
           ref={carouselRef}
-          className="flex gap-6 px-2 sm:px-16 py-6 scroll-smooth hide-scrollbar overflow-x-auto sm:overflow-x-hidden snap-x snap-mandatory"
+          className="flex gap-6 px-2 sm:px-16 py-6 scroll-smooth hide-scrollbar overflow-x-hidden sm:overflow-x-hidden snap-x snap-mandatory"
           style={{ scrollBehavior: "smooth" }}
           onScroll={(e) => {
             const scrollLeft = e.target.scrollLeft;

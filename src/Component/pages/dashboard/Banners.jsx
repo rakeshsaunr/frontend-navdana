@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-const API_URL = "https://navdana.com/api/v1/banner";
+const API_URL = "https://navdana-backend-2.onrender.com/api/v1/banner";
 
 const Banners = () => {
   const [banners, setBanners] = useState([]);
