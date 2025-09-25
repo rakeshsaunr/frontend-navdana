@@ -28,7 +28,7 @@ const defaultVariantRow = () => ({
 });
 
 const Product = () => {
-  console.log("Product Route Hit")
+  // State
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
@@ -47,35 +47,36 @@ const Product = () => {
   const [imageView, setImageView] = useState({ open: false, url: "", alt: "" });
   const [showFormPage, setShowFormPage] = useState(false);
 
+  // Fetch products and categories on mount
   useEffect(() => {
     fetchProducts();
     fetchCategories();
   }, []);
 
-  // Fix: Always ensure product.variant is an array for display
+  // Always ensure product.variant is an array for display
   const normalizeVariants = (variant) => {
     if (Array.isArray(variant)) return variant;
     if (variant && typeof variant === "object") return [variant];
     return [];
   };
 
+  // Fetch products
   const fetchProducts = async () => {
     setLoading(true);
     try {
       const res = await axios.get(API_URL);
-      console.log("Logs in the Product Section",res.data.data)
-      // Fix: Ensure each product.variant is always an array
       const prods = (res.data?.data || []).map((prod) => ({
         ...prod,
         variant: normalizeVariants(prod.variant),
       }));
       setProducts(prods);
-    } catch (error) {
-      console.error("Error fetching products:", error);
+    } catch {
+      setLoading(false);
     }
     setLoading(false);
   };
 
+  // Fetch categories
   const fetchCategories = async () => {
     try {
       const res = await axios.get(CATEGORY_API);
@@ -88,12 +89,12 @@ const Product = () => {
         }
       }
       setCategories(cats);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
+    } catch {
       setCategories([]);
     }
   };
 
+  // Handle simple field change
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({
@@ -102,6 +103,7 @@ const Product = () => {
     });
   };
 
+  // Handle variant row change
   const handleVariantRowChange = (idx, field, value) => {
     let updated = formData.variants.map((v, i) => {
       if (i !== idx) return v;
@@ -117,10 +119,10 @@ const Product = () => {
     setFormData({ ...formData, variants: updated });
   };
 
+  // Add/remove variant row
   const addVariantRow = () => {
     setFormData({ ...formData, variants: [...formData.variants, defaultVariantRow()] });
   };
-
   const removeVariantRow = (idx) => {
     if (formData.variants.length === 1) return;
     setFormData({
@@ -129,33 +131,57 @@ const Product = () => {
     });
   };
 
-  // Image file validation for allowed types
+  // Handle image field change (add/replace/alt)
   const handleImageChange = (index, field, value) => {
+    setFormError("");
+    setSuccessMsg("");
     const updatedImages = [...formData.images];
     if (field === "file") {
       const file = value.target.files[0];
       if (file && !ALLOWED_IMAGE_TYPES.includes(file.type)) {
         setFormError("Only JPG, JPEG, PNG image formats are allowed.");
-        // Don't update the file if not allowed
         return;
       }
-      updatedImages[index][field] = file;
-    } else {
-      updatedImages[index][field] = value;
+      // If this is an existing image (has _id), mark _replace: true and set file
+      if (updatedImages[index]._id) {
+        updatedImages[index] = {
+          ...updatedImages[index],
+          file,
+          _replace: !!file,
+        };
+        // Set a local preview URL for UI if file is chosen
+        if (file) {
+          updatedImages[index].previewUrl = URL.createObjectURL(file);
+        } else {
+          updatedImages[index].previewUrl = undefined;
+        }
+      } else {
+        updatedImages[index].file = file;
+        if (file) {
+          updatedImages[index].previewUrl = URL.createObjectURL(file);
+        } else {
+          updatedImages[index].previewUrl = undefined;
+        }
+      }
+    } else if (field === "alt") {
+      updatedImages[index].alt = value;
     }
     setFormData({ ...formData, images: updatedImages });
   };
 
+  // Add/remove image field
   const addImageField = () => {
     setFormData({ ...formData, images: [...formData.images, { file: null, alt: "" }] });
   };
-
   const removeImageField = (index) => {
     if (formData.images.length === 1) return;
-    const updatedImages = formData.images.filter((_, i) => i !== index);
-    setFormData({ ...formData, images: updatedImages });
+    setFormData({
+      ...formData,
+      images: formData.images.filter((_, i) => i !== index),
+    });
   };
 
+  // Reset form
   const resetForm = () => {
     setFormData({
       name: "",
@@ -172,6 +198,7 @@ const Product = () => {
     setShowFormPage(false);
   };
 
+  // Validate form
   const validateForm = () => {
     if (!formData.name.trim()) return "Product name is required";
     if (!formData.description.trim()) return "Description is required";
@@ -192,12 +219,14 @@ const Product = () => {
         return "Only JPG, JPEG, PNG image formats are allowed.";
       }
     }
+    // At least one image required for add
     if (!editingId && (!formData.images.length || !formData.images.some(img => img.file))) {
       return "At least one product image is required";
     }
     return "";
   };
 
+  // Handle submit (add/edit)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError("");
@@ -221,22 +250,60 @@ const Product = () => {
       dataToSend.append("category", formData.category);
       dataToSend.append("price", formData.price);
       dataToSend.append("isActive", formData.isActive ? "true" : "false");
-      // Ensure 'variant' is always an array and matches backend expectations
       dataToSend.append("variant", JSON.stringify(variantsWithColorName));
 
+      // --- Images handling block with imageOrder strategy ---
+      // Server expects:
+      // - imageOrder: JSON.stringify([{type: "existing", id, alt}, {type: "new", alt}, ...]) in slot order
+      // - For each "existing", send existingImages: id
+      // - For each "new", send images (file) and alts (alt) in order
+
+      // This block ensures that when you update a single image, all other images remain as they are,
+      // and the new image replaces only the selected slot, both on server and UI.
+      // It also supports updating multiple images at once, or just one, or all.
+
+      const imageOrder = [];
+      let newImageFiles = [];
+      let newImageAlts = [];
+      let existingImageIds = [];
+
       formData.images.forEach((img) => {
-        if (img.file) {
-          // Only allow allowed image types
-          if (ALLOWED_IMAGE_TYPES.includes(img.file.type)) {
-            dataToSend.append("images", img.file); // new file
-            dataToSend.append("alts", img.alt || "");
-          }
-        } else if (img._id) {
-          dataToSend.append("existingImages", img._id); // only send if still present
+        if (img._id && !img._replace) {
+          // Existing image, not replaced
+          imageOrder.push({ type: "existing", id: img._id, alt: img.alt || "" });
+          existingImageIds.push(img._id);
+        } else if (img._id && img._replace && img.file) {
+          // Existing image, but replaced with new file
+          imageOrder.push({ type: "new", alt: img.alt || "" });
+          newImageFiles.push(img.file);
+          newImageAlts.push(img.alt || "");
+        } else if (!img._id && img.file) {
+          // New image slot
+          imageOrder.push({ type: "new", alt: img.alt || "" });
+          newImageFiles.push(img.file);
+          newImageAlts.push(img.alt || "");
         }
+        // If slot is empty (no file, no _id), skip (shouldn't happen in UI)
       });
 
-      // Fetch token from localStorage
+      // Now, append imageOrder JSON
+      dataToSend.append("imageOrder", JSON.stringify(imageOrder));
+
+      // Append existingImages in order for each "existing" slot
+      existingImageIds.forEach((id) => {
+        dataToSend.append("existingImages", id);
+      });
+
+      // Append new images and alts in order for each "new" slot
+      newImageFiles.forEach((file, idx) => {
+        if (ALLOWED_IMAGE_TYPES.includes(file.type)) {
+          dataToSend.append("images", file);
+          dataToSend.append("alts", newImageAlts[idx]);
+        }
+      });
+      // --- End images handling block ---
+
+      // Token from localStorage
       const token = localStorage.getItem("token");
       const config = {
         headers: {
@@ -264,11 +331,11 @@ const Product = () => {
     setLoading(false);
   };
 
+  // Delete product
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this product?")) {
       setLoading(true);
       try {
-        // Fetch token from localStorage
         const token = localStorage.getItem("token");
         const config = {
           headers: {
@@ -289,13 +356,21 @@ const Product = () => {
     }
   };
 
+  // Edit product: load data into form, show existing images as thumbnails
   const handleEdit = (product) => {
+    // Always show all images (multiple) in edit mode, and allow single image update (replace) per image
     setFormData({
       name: product.name || "",
       description: product.description || "",
       images: product.images
-      ? product.images.map((img) => ({ file: null, url: img.url, alt: img.alt || "", _id: img._id }))
-      : [{ file: null, alt: "" }],
+        ? product.images.map((img) => ({
+            file: null,
+            url: img.url,
+            alt: img.alt || "",
+            _id: img._id,
+            _replace: false,
+          }))
+        : [{ file: null, alt: "" }],
       category: product.category?._id || "",
       price: product.price || "",
       variants: normalizeVariants(product.variant).length > 0
@@ -316,14 +391,17 @@ const Product = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  // Image view popup
   const openImageView = (url, alt) => setImageView({ open: true, url, alt });
   const closeImageView = () => setImageView({ open: false, url: "", alt: "" });
 
+  // Open add form
   const openAddForm = () => {
     resetForm();
     setShowFormPage(true);
   };
 
+  // Close form page
   const closeFormPage = () => {
     resetForm();
     setShowFormPage(false);
@@ -561,9 +639,33 @@ const Product = () => {
                 <div className="space-y-3">
                   {formData.images.map((img, index) => (
                     <div key={index} className="flex gap-3 items-center bg-white border border-blue-100 rounded-xl px-3 py-2 shadow-sm">
+                      {/* Show thumbnail if existing image and not being replaced */}
+                      {img._id && img.url && !img._replace && (
+                        <button
+                          type="button"
+                          className="focus:outline-none"
+                          onClick={() => openImageView(img.url, img.alt)}
+                          title={img.alt}
+                        >
+                          <img
+                            src={img.url}
+                            alt={img.alt}
+                            className="h-12 w-12 object-cover border-2 border-blue-200 rounded-lg shadow"
+                          />
+                        </button>
+                      )}
+                      {/* Show preview if new file is selected */}
+                      {img.file && img.previewUrl && (
+                        <img
+                          src={img.previewUrl}
+                          alt={img.alt}
+                          className="h-12 w-12 object-cover border-2 border-green-200 rounded-lg shadow"
+                          style={{ borderStyle: "dashed" }}
+                        />
+                      )}
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/jpeg,image/jpg,image/png"
                         onChange={(e) => handleImageChange(index, "file", e)}
                         className="flex-1 px-3 py-2 border border-gray-200 rounded-lg
                           focus:outline-none focus:ring-2 focus:ring-blue-400
@@ -588,6 +690,12 @@ const Product = () => {
                         >
                           &times;
                         </button>
+                      )}
+                      {/* Show "Replaced" badge if replacing existing image */}
+                      {img._id && img._replace && (
+                        <span className="ml-2 px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs font-medium">
+                          Will Replace
+                        </span>
                       )}
                     </div>
                   ))}
