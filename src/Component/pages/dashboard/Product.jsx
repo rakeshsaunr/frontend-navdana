@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import namer from "color-namer";
 
+// Allowed image types for upload
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png"];
+
 // ColorNameConverter function
 const ColorNameConverter = (hex) => {
   if (!hex) return "";
@@ -126,10 +129,17 @@ const Product = () => {
     });
   };
 
+  // Image file validation for allowed types
   const handleImageChange = (index, field, value) => {
     const updatedImages = [...formData.images];
     if (field === "file") {
-      updatedImages[index][field] = value.target.files[0];
+      const file = value.target.files[0];
+      if (file && !ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        setFormError("Only JPG, JPEG, PNG image formats are allowed.");
+        // Don't update the file if not allowed
+        return;
+      }
+      updatedImages[index][field] = file;
     } else {
       updatedImages[index][field] = value;
     }
@@ -176,6 +186,12 @@ const Product = () => {
       if (!v.stock || isNaN(v.stock)) return `Valid stock is required for variant ${i + 1}`;
       if (!v.size.trim()) return `Size is required for variant ${i + 1}`;
     }
+    // Validate image types before submit
+    for (let img of formData.images) {
+      if (img.file && !ALLOWED_IMAGE_TYPES.includes(img.file.type)) {
+        return "Only JPG, JPEG, PNG image formats are allowed.";
+      }
+    }
     if (!editingId && (!formData.images.length || !formData.images.some(img => img.file))) {
       return "At least one product image is required";
     }
@@ -210,15 +226,15 @@ const Product = () => {
 
       formData.images.forEach((img) => {
         if (img.file) {
-          dataToSend.append("images", img.file); // new file
-          dataToSend.append("alts", img.alt || "");
+          // Only allow allowed image types
+          if (ALLOWED_IMAGE_TYPES.includes(img.file.type)) {
+            dataToSend.append("images", img.file); // new file
+            dataToSend.append("alts", img.alt || "");
+          }
         } else if (img._id) {
           dataToSend.append("existingImages", img._id); // only send if still present
         }
       });
-      
-      
-      
 
       // Fetch token from localStorage
       const token = localStorage.getItem("token");
