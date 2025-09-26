@@ -51,7 +51,7 @@ const Product = () => {
   useEffect(() => {
     fetchProducts();
     fetchCategories();
-  }, []);
+  },);
 
   // Always ensure product.variant is an array for display
   const normalizeVariants = (variant) => {
