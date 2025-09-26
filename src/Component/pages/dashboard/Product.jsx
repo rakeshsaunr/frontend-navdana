@@ -132,30 +132,42 @@ const Product = () => {
   };
 
   // Handle image field change (add/replace/alt)
+  // Now supports: replace existing, remove existing, add new images
   const handleImageChange = (index, field, value) => {
     setFormError("");
     setSuccessMsg("");
-    const updatedImages = [...formData.images];
+    let updatedImages = [...formData.images];
+
     if (field === "file") {
       const file = value.target.files[0];
       if (file && !ALLOWED_IMAGE_TYPES.includes(file.type)) {
         setFormError("Only JPG, JPEG, PNG image formats are allowed.");
         return;
       }
-      // If this is an existing image (has _id), mark _replace: true and set file
+
+      // If this is an existing image (has _id)
       if (updatedImages[index]._id) {
-        updatedImages[index] = {
-          ...updatedImages[index],
-          file,
-          _replace: !!file,
-        };
-        // Set a local preview URL for UI if file is chosen
         if (file) {
-          updatedImages[index].previewUrl = URL.createObjectURL(file);
+          // Replace existing image
+          updatedImages[index] = {
+            ...updatedImages[index],
+            file,
+            _replace: true,
+            // Remove _remove flag if present (INSTRUCTION 1)
+            ...(updatedImages[index]._remove ? { _remove: false } : {}),
+            previewUrl: URL.createObjectURL(file),
+          };
         } else {
-          updatedImages[index].previewUrl = undefined;
+          // Remove file selection (reset replacement)
+          updatedImages[index] = {
+            ...updatedImages[index],
+            file: null,
+            _replace: false,
+            previewUrl: undefined,
+          };
         }
       } else {
+        // New image slot
         updatedImages[index].file = file;
         if (file) {
           updatedImages[index].previewUrl = URL.createObjectURL(file);
@@ -169,15 +181,32 @@ const Product = () => {
     setFormData({ ...formData, images: updatedImages });
   };
 
-  // Add/remove image field
+  // Add new image field (for adding new images)
   const addImageField = () => {
     setFormData({ ...formData, images: [...formData.images, { file: null, alt: "" }] });
   };
+
+  // Remove image field (for both new and existing images)
   const removeImageField = (index) => {
-    if (formData.images.length === 1) return;
-    setFormData({
-      ...formData,
-      images: formData.images.filter((_, i) => i !== index),
+    setFormData(prev => {
+      const images = [...prev.images];
+      const slot = images[index];
+      if (!slot) return prev;
+
+      if (slot._id) {
+        // existing image => mark for removal (no index shift)
+        images[index] = {
+          ...slot,
+          _remove: !slot._remove,  // toggle
+          _replace: false,
+          file: null,
+          previewUrl: undefined,
+        };
+      } else {
+        // brand new slot => safe to actually remove
+        if (images.length > 1) images.splice(index, 1);
+      }
+      return { ...prev, images };
     });
   };
 
@@ -223,6 +252,10 @@ const Product = () => {
     if (!editingId && (!formData.images.length || !formData.images.some(img => img.file))) {
       return "At least one product image is required";
     }
+    // For edit: at least one image must remain (not all removed)
+    if (editingId && formData.images.filter(img => !(img._remove)).length === 0) {
+      return "At least one product image must remain";
+    }
     return "";
   };
 
@@ -253,55 +286,42 @@ const Product = () => {
       dataToSend.append("variant", JSON.stringify(variantsWithColorName));
 
       // --- Images handling block with imageOrder strategy ---
-      // Server expects:
-      // - imageOrder: JSON.stringify([{type: "existing", id, alt}, {type: "new", alt}, ...]) in slot order
-      // - For each "existing", send existingImages: id
-      // - For each "new", send images (file) and alts (alt) in order
-
-      // This block ensures that when you update a single image, all other images remain as they are,
-      // and the new image replaces only the selected slot, both on server and UI.
-      // It also supports updating multiple images at once, or just one, or all.
-
+      // Only images with _replace: true will be replaced, _remove: true will be removed, new images will be added
+      // INSTRUCTION 2: imageOrder should be (keep/replace/add), skip remove
       const imageOrder = [];
       let newImageFiles = [];
       let newImageAlts = [];
       let existingImageIds = [];
 
       formData.images.forEach((img) => {
-        if (img._id && !img._replace) {
-          // Existing image, not replaced
-          imageOrder.push({ type: "existing", id: img._id, alt: img.alt || "" });
+        if (img._id && !img._replace && !img._remove) {
+          // Existing image, keep as is
+          imageOrder.push({ type: "keep", id: img._id, alt: img.alt || "" });
           existingImageIds.push(img._id);
-        } else if (img._id && img._replace && img.file) {
-          // Existing image, but replaced with new file
-          imageOrder.push({ type: "new", alt: img.alt || "" });
+        } else if (img._id && img._replace && img.file && !img._remove) {
+          // Existing image, being replaced
+          imageOrder.push({ type: "replace", alt: img.alt || "" });
           newImageFiles.push(img.file);
           newImageAlts.push(img.alt || "");
         } else if (!img._id && img.file) {
-          // New image slot
-          imageOrder.push({ type: "new", alt: img.alt || "" });
+          // New image
+          imageOrder.push({ type: "add", alt: img.alt || "" });
           newImageFiles.push(img.file);
           newImageAlts.push(img.alt || "");
         }
-        // If slot is empty (no file, no _id), skip (shouldn't happen in UI)
+        // If _remove is true, skip from imageOrder (removes from product)
       });
 
-      // Now, append imageOrder JSON
       dataToSend.append("imageOrder", JSON.stringify(imageOrder));
-
-      // Append existingImages in order for each "existing" slot
       existingImageIds.forEach((id) => {
         dataToSend.append("existingImages", id);
       });
-
-      // Append new images and alts in order for each "new" slot
       newImageFiles.forEach((file, idx) => {
         if (ALLOWED_IMAGE_TYPES.includes(file.type)) {
           dataToSend.append("images", file);
           dataToSend.append("alts", newImageAlts[idx]);
         }
       });
-      // --- End images handling block ---
 
       // Token from localStorage
       const token = localStorage.getItem("token");
@@ -313,14 +333,128 @@ const Product = () => {
       };
 
       if (editingId) {
-        await axios.put(`${API_URL}/${editingId}`, dataToSend, config);
+        // Update only the changed fields for the product
+        const originalProduct = products.find((p) => p._id === editingId);
+        if (!originalProduct) {
+          setFormError("Original product not found.");
+          setLoading(false);
+          return;
+        }
+
+        // Helper to compare arrays shallowly
+        const shallowArrayEqual = (a, b) => {
+          if (!Array.isArray(a) || !Array.isArray(b)) return false;
+          if (a.length !== b.length) return false;
+          for (let i = 0; i < a.length; i++) {
+            if (a[i] !== b[i]) return false;
+          }
+          return true;
+        };
+
+        // Helper to compare variants
+        const variantsEqual = (a, b) => {
+          if (!Array.isArray(a) || !Array.isArray(b)) return false;
+          if (a.length !== b.length) return false;
+          for (let i = 0; i < a.length; i++) {
+            const va = a[i], vb = b[i];
+            if (
+              va.color !== vb.color ||
+              va.colorName !== vb.colorName ||
+              va.sku !== vb.sku ||
+              String(va.stock) !== String(vb.stock) ||
+              va.size !== vb.size
+            ) {
+              return false;
+            }
+          }
+          return true;
+        };
+
+        // Only append fields that have changed
+        let minimalData = new FormData();
+        let somethingChanged = false;
+        if (formData.name !== originalProduct.name) {
+          minimalData.append("name", formData.name);
+          somethingChanged = true;
+        }
+        if (formData.description !== originalProduct.description) {
+          minimalData.append("description", formData.description);
+          somethingChanged = true;
+        }
+        if (
+          (formData.category && originalProduct.category && formData.category !== originalProduct.category._id) ||
+          (!formData.category && originalProduct.category) ||
+          (formData.category && !originalProduct.category)
+        ) {
+          minimalData.append("category", formData.category);
+          somethingChanged = true;
+        }
+        if (String(formData.price) !== String(originalProduct.price)) {
+          minimalData.append("price", formData.price);
+          somethingChanged = true;
+        }
+        if (formData.isActive !== originalProduct.isActive) {
+          minimalData.append("isActive", formData.isActive ? "true" : "false");
+          somethingChanged = true;
+        }
+        if (!variantsEqual(formData.variants, normalizeVariants(originalProduct.variant))) {
+          minimalData.append("variant", JSON.stringify(variantsWithColorName));
+          somethingChanged = true;
+        }
+
+        // For images, always send the imageOrder and only changed images will be replaced/removed/added
+        minimalData.append("imageOrder", JSON.stringify(imageOrder));
+        existingImageIds.forEach((id) => {
+          minimalData.append("existingImages", id);
+        });
+        newImageFiles.forEach((file, idx) => {
+          if (ALLOWED_IMAGE_TYPES.includes(file.type)) {
+            minimalData.append("images", file);
+            minimalData.append("alts", newImageAlts[idx]);
+          }
+        });
+
+        // If nothing changed except images, still allow update
+        const originalImageIds = (originalProduct.images || []).map(img => img._id);
+        if (
+          !somethingChanged &&
+          (newImageFiles.length === 0 && shallowArrayEqual(existingImageIds, originalImageIds))
+        ) {
+          setFormError("No changes to update.");
+          setLoading(false);
+          return;
+        }
+
+        await axios.put(`${API_URL}/${editingId}`, minimalData, config);
+
+        // Fetch the updated product from backend
+        const updatedRes = await axios.get(`${API_URL}/${editingId}`);
+        const updatedProduct = updatedRes.data?.data;
+        setProducts((prev) =>
+          prev.map((p) =>
+            p._id === editingId
+              ? {
+                  ...updatedProduct,
+                  variant: normalizeVariants(updatedProduct.variant),
+                }
+              : p
+          )
+        );
         setSuccessMsg("Product updated successfully!");
       } else {
-        await axios.post(API_URL, dataToSend, config);
+        const res = await axios.post(API_URL, dataToSend, config);
+        // Add the new product to the list
+        const newProduct = res.data?.data;
+        setProducts((prev) => [
+          ...prev,
+          {
+            ...newProduct,
+            variant: normalizeVariants(newProduct.variant),
+          },
+        ]);
         setSuccessMsg("Product added successfully!");
       }
       resetForm();
-      fetchProducts();
     } catch (error) {
       setFormError(
         error?.response?.data?.message ||
@@ -344,7 +478,7 @@ const Product = () => {
         };
         await axios.delete(`${API_URL}/${id}`, config);
         setSuccessMsg("Product deleted successfully!");
-        fetchProducts();
+        setProducts((prev) => prev.filter((p) => p._id !== id));
       } catch (error) {
         setFormError(
           error?.response?.data?.message ||
@@ -358,19 +492,22 @@ const Product = () => {
 
   // Edit product: load data into form, show existing images as thumbnails
   const handleEdit = (product) => {
-    // Always show all images (multiple) in edit mode, and allow single image update (replace) per image
-    setFormData({
-      name: product.name || "",
-      description: product.description || "",
-      images: product.images
+    // If no images, always at least one empty slot
+    let imagesArr =
+      product.images && product.images.length > 0
         ? product.images.map((img) => ({
             file: null,
             url: img.url,
             alt: img.alt || "",
             _id: img._id,
             _replace: false,
+            _remove: false,
           }))
-        : [{ file: null, alt: "" }],
+        : [{ file: null, alt: "" }];
+    setFormData({
+      name: product.name || "",
+      description: product.description || "",
+      images: imagesArr,
       category: product.category?._id || "",
       price: product.price || "",
       variants: normalizeVariants(product.variant).length > 0
@@ -405,6 +542,12 @@ const Product = () => {
   const closeFormPage = () => {
     resetForm();
     setShowFormPage(false);
+  };
+
+  // Helper to get category name by id
+  const getCategoryName = (catId) => {
+    const cat = categories.find((c) => c._id === catId);
+    return cat ? cat.name : "";
   };
 
   // Main render
@@ -638,9 +781,10 @@ const Product = () => {
                 </h4>
                 <div className="space-y-3">
                   {formData.images.map((img, index) => (
-                    <div key={index} className="flex gap-3 items-center bg-white border border-blue-100 rounded-xl px-3 py-2 shadow-sm">
-                      {/* Show thumbnail if existing image and not being replaced */}
-                      {img._id && img.url && !img._replace && (
+                    <div key={img._id ? `img-${img._id}` : `new-${index}`} className="flex gap-3 items-center bg-white border border-blue-100 rounded-xl px-3 py-2 shadow-sm">
+                      {/* Show thumbnail if existing image and not being replaced or removed */}
+                      {/* INSTRUCTION 4: Hide thumbnail if _replace or _remove */}
+                      {img._id && img.url && !img._replace && !img._remove && (
                         <button
                           type="button"
                           className="focus:outline-none"
@@ -670,6 +814,7 @@ const Product = () => {
                         className="flex-1 px-3 py-2 border border-gray-200 rounded-lg
                           focus:outline-none focus:ring-2 focus:ring-blue-400
                           focus:border-blue-400 transition shadow-sm bg-blue-50/50"
+                        // INSTRUCTION 3: In edit mode, file input should not be required
                         required={!editingId}
                       />
                       <input
@@ -685,16 +830,17 @@ const Product = () => {
                         <button
                           type="button"
                           onClick={() => removeImageField(index)}
-                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-full shadow transition-all duration-150"
-                          title="Remove"
+                          className={`px-3 py-1 rounded-full shadow transition-all duration-150 text-white
+                          ${img._id ? "bg-orange-500 hover:bg-orange-600" : "bg-red-500 hover:bg-red-600"}`}
+                          title={img._id ? (img._remove ? "Undo Remove" : "Mark Remove") : "Remove"}
                         >
-                          &times;
+                        {img._id ? (img._remove ? "Undo" : "Remove") : "×"}
                         </button>
                       )}
-                      {/* Show "Replaced" badge if replacing existing image */}
-                      {img._id && img._replace && (
-                        <span className="ml-2 px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs font-medium">
-                          Will Replace
+                      {/* Show "Will Remove" badge if removing existing image */}
+                      {img._id && img._remove && (
+                        <span className="ml-2 px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-medium">
+                          Will Remove
                         </span>
                       )}
                     </div>
@@ -878,6 +1024,17 @@ const Product = () => {
                     Active
                   </th>
                   <th
+                    className="px-5 py-3 text-left font-semibold text-blue-900 bg-blue-100"
+                    style={{
+                      position: "sticky",
+                      top: 0,
+                      zIndex: 10,
+                      background: "#DBEAFE",
+                    }}
+                  >
+                    Description
+                  </th>
+                  <th
                     className="px-5 py-3 text-left font-semibold text-blue-900 bg-blue-100 rounded-tr-xl"
                     style={{
                       position: "sticky",
@@ -899,7 +1056,11 @@ const Product = () => {
                     }`}
                   >
                     <td className="px-5 py-3 rounded-l-xl border-y border-blue-100 font-semibold text-gray-800 group-hover:bg-blue-50 transition">{prod.name}</td>
-                    <td className="px-5 py-3 border-y border-blue-100 text-gray-700 group-hover:bg-blue-50 transition">{prod.category?.name || "—"}</td>
+                    <td className="px-5 py-3 border-y border-blue-100 text-gray-700 group-hover:bg-blue-50 transition">
+                      {prod.category?.name ||
+                        getCategoryName(prod.category?._id || prod.category) ||
+                        "—"}
+                    </td>
                     <td className="px-5 py-3 border-y border-blue-100 text-pink-600 font-bold group-hover:bg-blue-50 transition">₹{prod.price}</td>
                     {/* Variants column: show all variant details */}
                     <td className="px-5 py-3 border-y border-blue-100 group-hover:bg-blue-50 transition">
@@ -952,7 +1113,7 @@ const Product = () => {
                         {prod.images?.length > 0 ? (
                           prod.images.map((img, i) => (
                             <button
-                              key={i}
+                              key={img._id ? `tbl-${img._id}` : `tbl-${i}`}
                               type="button"
                               onClick={() => openImageView(img.url, img.alt)}
                               className="focus:outline-none hover:scale-110 transition"
@@ -982,6 +1143,10 @@ const Product = () => {
                         {prod.isActive ? "Yes" : "No"}
                       </span>
                     </td>
+                    {/* Description */}
+                    <td className="px-5 py-3 border-y border-blue-100 group-hover:bg-blue-50 transition">
+                      <span className="text-gray-700 text-sm">{prod.description || <span className="text-gray-400">_</span>}</span>
+                    </td>
                     {/* Actions */}
                     <td className="px-5 py-3 rounded-r-xl border-y border-blue-100 group-hover:bg-blue-50 transition">
                       <div className="flex gap-2">
@@ -1003,7 +1168,7 @@ const Product = () => {
                 ))}
                 {products.length === 0 && (
                   <tr>
-                    <td colSpan="7" className="text-center text-gray-500 py-8 bg-white rounded-b-xl">
+                    <td colSpan="8" className="text-center text-gray-500 py-8 bg-white rounded-b-xl">
                       {loading ? (
                         <span className="flex items-center justify-center gap-2">
                           <svg className="animate-spin h-5 w-5 text-blue-400" viewBox="0 0 24 24">
